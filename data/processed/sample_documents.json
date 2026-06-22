@@ -1,0 +1,286 @@
+{
+  "secura_dual_cestra": {
+    "id": "secura_dual_cestra|rank:|subtype:",
+    "slug": "secura_dual_cestra",
+    "rank": null,
+    "subtype": null,
+    "market": {
+      "item_name": "Secura Dual Cestra",
+      "is_prime_part": false,
+      "price_snapshot_date": "2026-05-30",
+      "sell": {
+        "count": 173,
+        "platinum_min": 10.0,
+        "platinum_max": 200.0,
+        "platinum_median": 37.0,
+        "platinum_p25": 34.0,
+        "platinum_p75": 45.0,
+        "total_quantity": 1356,
+        "avg_quantity": 7.84
+      },
+      "buy": {
+        "count": 68,
+        "platinum_min": 10.0,
+        "platinum_max": 26.0,
+        "platinum_median": 19.5,
+        "platinum_p25": 15.0,
+        "platinum_p75": 20.0,
+        "total_quantity": 130,
+        "avg_quantity": 1.91
+      }
+    },
+    "wfm": {
+      "id": "54aae292e7798909064f1575",
+      "slug": "secura_dual_cestra",
+      "gameRef": "/Lotus/Weapons/Syndicates/PerrinSequence/Pistols/PSDualCestra",
+      "tags": [
+        "syndicate",
+        "weapon",
+        "secondary"
+      ],
+      "reqMasteryRank": 10,
+      "tradingTax": 2000,
+      "ducats": null,
+      "tradable": true,
+      "setRoot": null,
+      "name": "Secura Dual Cestra",
+      "description": "The favored side-arms of Perrin Sequence executives, these pistols have been modified to improve efficiency and killing potential.",
+      "wikiLink": "https://warframe.fandom.com/wiki/Secura_Dual_Cestra",
+      "image_url": "https://warframe.market/static/assets/items/images/en/secura_dual_cestra.3d47a4ec6675ff774bb0da9b16c53e0e.png",
+      "thumb_url": "https://warframe.market/static/assets/items/images/en/thumbs/secura_dual_cestra.3d47a4ec6675ff774bb0da9b16c53e0e.128x128.png"
+    },
+    "wfi": {
+      "name": "Secura Dual Cestra",
+      "uniqueName": "/Lotus/Weapons/Syndicates/PerrinSequence/Pistols/PSDualCestra",
+      "category": "Secondary",
+      "type": "Pistol",
+      "description": "The favored side-arms of Perrin Sequence executives, these pistols have been modified to improve efficiency and killing potential.",
+      "tradable": true,
+      "masteryReq": 10,
+      "imageName": "SecuraDualCestra.png",
+      "isPrime": false,
+      "damage": {
+        "total": 28,
+        "impact": 5.5999999,
+        "puncture": 0,
+        "slash": 22.4,
+        "heat": 0,
+        "cold": 0,
+        "electricity": 0,
+        "toxin": 0,
+        "blast": 0,
+        "radiation": 0,
+        "gas": 0,
+        "magnetic": 0,
+        "viral": 0,
+        "corrosive": 0,
+        "void": 0,
+        "tau": 0,
+        "cinematic": 0,
+        "shieldDrain": 0,
+        "healthDrain": 0,
+        "energyDrain": 0,
+        "true": 0
+      },
+      "criticalChance": 0.16,
+      "criticalMultiplier": 1.6,
+      "procChance": 0.27999997,
+      "fireRate": 12.500001,
+      "totalDamage": 28,
+      "drop_locations": [
+        "The Perrin Sequence, Partner"
+      ],
+      "image_url": "https://cdn.warframestat.us/img/SecuraDualCestra.png",
+      "stats_summary": "28 total damage, 16% crit, 28% status, 12.500001 fire rate"
+    },
+    "image_url": "https://warframe.market/static/assets/items/images/en/secura_dual_cestra.3d47a4ec6675ff774bb0da9b16c53e0e.png",
+    "text_for_embedding": "Secura Dual Cestra (secura_dual_cestra). Description: The favored side-arms of Perrin Sequence executives, these pistols have been modified to improve efficiency and killing potential. Category: Secondary / Pistol. Mastery rank required: 10. Stats: 28 total damage, 16% crit, 28% status, 12.500001 fire rate. Drop locations: The Perrin Sequence, Partner. Trading tax: 2000 credits. Tags: syndicate, weapon, secondary. Market prices as of 2026-05-30: 173 sell orders (median 37p, range 10–200p) 68 buy orders (median 20p, range 10–26p)"
+  },
+  "creeping_bullseye": {
+    "id": "creeping_bullseye|rank:5|subtype:",
+    "slug": "creeping_bullseye",
+    "rank": 5,
+    "subtype": null,
+    "market": {
+      "item_name": "Creeping Bullseye",
+      "is_prime_part": false,
+      "price_snapshot_date": "2026-05-30",
+      "sell": {
+        "count": 242,
+        "platinum_min": 5.0,
+        "platinum_max": 150.0,
+        "platinum_median": 15.0,
+        "platinum_p25": 14.0,
+        "platinum_p75": 25.0,
+        "total_quantity": 920,
+        "avg_quantity": 3.8
+      },
+      "buy": null
+    },
+    "wfm": {
+      "id": "54ca39abe7798915c1c11e10",
+      "slug": "creeping_bullseye",
+      "gameRef": "/Lotus/Upgrades/Mods/Pistol/DualStat/CorruptedCritChanceFireRatePistol",
+      "tags": [
+        "mod",
+        "rare",
+        "pistol",
+        "secondary"
+      ],
+      "reqMasteryRank": null,
+      "tradingTax": 8000,
+      "ducats": null,
+      "tradable": true,
+      "setRoot": null,
+      "name": "Creeping Bullseye",
+      "description": "+200% Critical Chance\n-20% Fire Rate",
+      "wikiLink": "https://wiki.warframe.com/w/Creeping_Bullseye",
+      "image_url": "https://warframe.market/static/assets/items/images/en/creeping_bullseye.dfcb8d21b36d9e2a2632f37c75b3532f.png",
+      "thumb_url": "https://warframe.market/static/assets/items/images/en/thumbs/creeping_bullseye.dfcb8d21b36d9e2a2632f37c75b3532f.128x128.png"
+    },
+    "wfi": {
+      "name": "Creeping Bullseye",
+      "uniqueName": "/Lotus/Upgrades/Mods/Pistol/DualStat/CorruptedCritChanceFireRatePistol",
+      "category": "Mods",
+      "type": "Secondary Mod",
+      "tradable": true,
+      "imageName": "CorruptedCritChanceFireRatePistolMod.jpg",
+      "rarity": "Rare",
+      "polarity": "naramon",
+      "fusionLimit": 5,
+      "isPrime": false,
+      "drop_locations": [
+        "Derelict Vault"
+      ],
+      "image_url": "https://cdn.warframestat.us/img/CorruptedCritChanceFireRatePistolMod.jpg",
+      "rank_effect": "+200% Critical Chance; -20% Fire Rate"
+    },
+    "image_url": "https://warframe.market/static/assets/items/images/en/creeping_bullseye.dfcb8d21b36d9e2a2632f37c75b3532f.png",
+    "text_for_embedding": "Creeping Bullseye (rank 5) (creeping_bullseye). Description: +200% Critical Chance\n-20% Fire Rate Category: Mods / Secondary Mod. Rarity: Rare. Polarity: naramon. Rank 5 effect: +200% Critical Chance; -20% Fire Rate. Drop locations: Derelict Vault. Trading tax: 8000 credits. Tags: mod, rare, pistol, secondary. Market prices as of 2026-05-30: 242 sell orders (median 15p, range 5–150p) No buy orders."
+  },
+  "nova_prime_set": {
+    "id": "nova_prime_set|rank:|subtype:",
+    "slug": "nova_prime_set",
+    "rank": null,
+    "subtype": null,
+    "market": {
+      "item_name": "Nova Prime Set",
+      "is_prime_part": true,
+      "price_snapshot_date": "2026-05-30",
+      "sell": {
+        "count": 1529,
+        "platinum_min": 45.0,
+        "platinum_max": 300.0,
+        "platinum_median": 79.0,
+        "platinum_p25": 70.0,
+        "platinum_p75": 89.0,
+        "total_quantity": 15325,
+        "avg_quantity": 10.02
+      },
+      "buy": {
+        "count": 108,
+        "platinum_min": 10.0,
+        "platinum_max": 65.0,
+        "platinum_median": 50.0,
+        "platinum_p25": 41.75,
+        "platinum_p75": 53.0,
+        "total_quantity": 18417,
+        "avg_quantity": 170.53
+      }
+    },
+    "wfm": {
+      "id": "56783f24cbfa8f0432dd89a5",
+      "slug": "nova_prime_set",
+      "gameRef": "/Lotus/Powersuits/AntiMatter/NovaPrime",
+      "tags": [
+        "set",
+        "prime",
+        "warframe"
+      ],
+      "reqMasteryRank": 0,
+      "tradingTax": 8000,
+      "ducats": 175,
+      "tradable": true,
+      "setRoot": true,
+      "name": "Nova Prime Set",
+      "description": "Nova Prime wreaks devastation on her enemies using volatile antimatter. Featuring altered mod polarities for greater customization.",
+      "wikiLink": "https://wiki.warframe.com/w/Nova_Prime",
+      "image_url": "https://warframe.market/static/assets/items/images/en/nova_prime_set.639a9222e1cb351cd6dd09ef28155ef0.png",
+      "thumb_url": "https://warframe.market/static/assets/items/images/en/thumbs/nova_prime_set.639a9222e1cb351cd6dd09ef28155ef0.128x128.png",
+      "set_parts_slugs": [
+        "nova_prime_blueprint",
+        "nova_prime_chassis_blueprint",
+        "nova_prime_neuroptics_blueprint",
+        "nova_prime_systems_blueprint"
+      ]
+    },
+    "wfi": {
+      "name": "Nova Prime",
+      "uniqueName": "/Lotus/Powersuits/AntiMatter/NovaPrime",
+      "category": "Warframes",
+      "type": "Warframe",
+      "description": "Nova Prime wreaks devastation on her enemies using volatile antimatter. Featuring altered mod polarities for greater customization.",
+      "tradable": false,
+      "masteryReq": 0,
+      "imageName": "NovaPrime.png",
+      "vaulted": true,
+      "isPrime": true,
+      "image_url": "https://cdn.warframestat.us/img/NovaPrime.png"
+    },
+    "image_url": "https://warframe.market/static/assets/items/images/en/nova_prime_set.639a9222e1cb351cd6dd09ef28155ef0.png",
+    "text_for_embedding": "Nova Prime Set (nova_prime_set). Description: Nova Prime wreaks devastation on her enemies using volatile antimatter. Featuring altered mod polarities for greater customization. Category: Warframes / Warframe. Mastery rank required: 0. Status: vaulted. Trading tax: 8000 credits. Ducats: 175. Tags: set, prime, warframe. Set includes: nova_prime_blueprint, nova_prime_chassis_blueprint, nova_prime_neuroptics_blueprint, nova_prime_systems_blueprint. Market prices as of 2026-05-30: 1529 sell orders (median 79p, range 45–300p) 108 buy orders (median 50p, range 10–65p)"
+  },
+  "requiem_iv_relic": {
+    "id": "requiem_iv_relic|rank:|subtype:intact",
+    "slug": "requiem_iv_relic",
+    "rank": null,
+    "subtype": "intact",
+    "market": {
+      "item_name": "Requiem IV Relic",
+      "is_prime_part": false,
+      "price_snapshot_date": "2026-05-30",
+      "sell": {
+        "count": 119,
+        "platinum_min": 1.0,
+        "platinum_max": 40.0,
+        "platinum_median": 2.0,
+        "platinum_p25": 2.0,
+        "platinum_p75": 3.0,
+        "total_quantity": 4269,
+        "avg_quantity": 35.87
+      },
+      "buy": {
+        "count": 1,
+        "platinum_min": 1.0,
+        "platinum_max": 1.0,
+        "platinum_median": 1.0,
+        "platinum_p25": 1.0,
+        "platinum_p75": 1.0,
+        "total_quantity": 88,
+        "avg_quantity": 88.0
+      }
+    },
+    "wfm": {
+      "id": "6054dd075221e30057500f15",
+      "slug": "requiem_iv_relic",
+      "gameRef": "/Lotus/Types/Game/Projections/T5VoidProjectionImmortalD",
+      "tags": [
+        "relic",
+        "requiem"
+      ],
+      "reqMasteryRank": null,
+      "tradingTax": 2000,
+      "ducats": null,
+      "tradable": true,
+      "setRoot": null,
+      "name": "Requiem IV Relic",
+      "description": "Holds Requiem Mods and other mysteries.",
+      "wikiLink": null,
+      "image_url": "https://warframe.market/static/assets/items/images/en/requiem_iv_relic.70479db2ff21c243673e2a3caf93d7b9.png",
+      "thumb_url": "https://warframe.market/static/assets/items/images/en/thumbs/requiem_iv_relic.70479db2ff21c243673e2a3caf93d7b9.128x128.png"
+    },
+    "wfi": null,
+    "image_url": "https://warframe.market/static/assets/items/images/en/requiem_iv_relic.70479db2ff21c243673e2a3caf93d7b9.png",
+    "text_for_embedding": "intact Requiem IV Relic (requiem_iv_relic). Description: Holds Requiem Mods and other mysteries. Trading tax: 2000 credits. Tags: relic, requiem. Market prices as of 2026-05-30: 119 sell orders (median 2p, range 1–40p) 1 buy orders (median 1p, range 1–1p)"
+  }
+}

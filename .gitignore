@@ -1,0 +1,15 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+data/cache/
+data/chroma/
+data/processed/orders.db
+data/processed/order_aggregates.json
+data/processed/rag_documents.json
+data/processed/rag_documents.jsonl
+data/processed/*.log
+*.zip
