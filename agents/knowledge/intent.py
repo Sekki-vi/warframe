@@ -26,6 +26,10 @@ _COUNT_PATTERN = re.compile(
     re.I,
 )
 _WARFRAME_WORDS = re.compile(r"\bwarframes?\b", re.I)
+_SPEED_SORT = re.compile(
+    r"\b(fastest|most speed|highest sprint|base speed|sprint speed|quickest|speediest)\b",
+    re.I,
+)
 _MOD_NAME = re.compile(r"\bprimed\b", re.I)
 _BROWSE_VARIANT = re.compile(
     r"\b(kuva|tenet|prisma|vandal|wraith|prime|base|normal|standard)\b"
@@ -70,13 +74,6 @@ _WEAPON_SUBTYPES = {
 }
 
 
-_PARTS_QUERY = re.compile(
-    r"\b(?:parts?\s+(?:to|for|needed|required)|what\s+(?:do\s+i\s+need|parts)|"
-    r"components?\s+(?:to|for|needed)|blueprints?\s+for|build)\b",
-    re.I,
-)
-
-
 @dataclass
 class QueryIntent:
     kind: IntentKind
@@ -86,7 +83,7 @@ class QueryIntent:
     variant: str | None = None
     browse_equipment_class: str | None = None
     tier_filter: str | None = None
-    want_set_parts: bool = False
+    speed_sort: bool = False
 
 
 def strip_question_prefix(query: str) -> str:
@@ -188,10 +185,6 @@ def _detect_single_item_query(query: str) -> bool:
     return False
 
 
-def _detect_set_parts_query(query: str) -> bool:
-    return bool(_PARTS_QUERY.search(query))
-
-
 def parse_query_intent(query: str) -> QueryIntent:
     """Classify query and choose default result cap."""
     subtypes = _detect_subtypes(query)
@@ -199,8 +192,8 @@ def parse_query_intent(query: str) -> QueryIntent:
     variant = _detect_variant(query, want_mods=want_mods)
     browse_equipment_class = _detect_browse_equipment_class(query)
     tier_filter = _detect_tier_filter(query)
-    want_set_parts = _detect_set_parts_query(query)
     explicit = _parse_explicit_count(query)
+    speed_sort = bool(_SPEED_SORT.search(query))
     q_lower = query.lower()
 
     if _detect_single_item_query(query):
@@ -212,7 +205,7 @@ def parse_query_intent(query: str) -> QueryIntent:
             variant=None,
             browse_equipment_class=browse_equipment_class,
             tier_filter=tier_filter,
-            want_set_parts=want_set_parts,
+            speed_sort=speed_sort,
         )
 
     browse_target = subtypes or browse_equipment_class or "weapon" in q_lower
@@ -251,7 +244,7 @@ def parse_query_intent(query: str) -> QueryIntent:
         variant=variant,
         browse_equipment_class=browse_equipment_class,
         tier_filter=tier_filter,
-        want_set_parts=want_set_parts,
+        speed_sort=speed_sort,
     )
 
 

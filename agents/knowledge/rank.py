@@ -33,6 +33,8 @@ def _stat_score(doc: dict[str, Any]) -> float:
     m = _STAT_CRIT.search(text)
     if m:
         score += float(m.group(1))
+    if doc.get("tradable"):
+        score += 5.0
     return score
 
 
@@ -82,6 +84,10 @@ def rank_candidates(
 
     if intent.kind == "random":
         return [rng.choice(pool)]
+
+    if intent.speed_sort:
+        pool.sort(key=lambda d: -(d.get("sprint_speed") or 0.0))
+        return pool[: intent.result_count]
 
     pool.sort(
         key=lambda d: (

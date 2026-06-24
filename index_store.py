@@ -41,9 +41,10 @@ def _build_metadata(doc: dict[str, Any]) -> dict[str, Any]:
         "rarity": doc.get("rarity") or "",
         "polarity": doc.get("polarity") or "",
     }
-    wfm_slug = doc.get("wfm_slug")
-    if wfm_slug:
-        meta["wfm_slug"] = wfm_slug
+    if doc.get("tradable") is not None:
+        meta["tradable"] = bool(doc["tradable"])
+    if doc.get("sprint_speed") is not None:
+        meta["sprint_speed"] = float(doc["sprint_speed"])
     return meta
 
 

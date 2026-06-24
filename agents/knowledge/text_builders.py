@@ -51,6 +51,29 @@ def _weapon_stats_summary(wfi: dict[str, Any]) -> str | None:
     return ", ".join(parts)
 
 
+def _warframe_stats_summary(wfi: dict[str, Any]) -> str | None:
+    """Base stats summary for warframe entries (health/shield/armor/energy/sprint)."""
+    sprint = wfi.get("sprintSpeed") or wfi.get("sprint")
+    health = wfi.get("health")
+    shield = wfi.get("shield")
+    armor = wfi.get("armor")
+    power = wfi.get("power")
+    if sprint is None and health is None:
+        return None
+    parts: list[str] = []
+    if sprint is not None:
+        parts.append(f"sprint speed {sprint}")
+    if health is not None:
+        parts.append(f"HP {health}")
+    if shield is not None:
+        parts.append(f"shield {shield}")
+    if armor is not None:
+        parts.append(f"armor {armor}")
+    if power is not None:
+        parts.append(f"energy {power}")
+    return ", ".join(parts)
+
+
 def _rank_effects_summary(wfi: dict[str, Any]) -> str | None:
     stats = wfi.get("levelStats")
     if not stats:
@@ -91,6 +114,8 @@ def _core_lines(slug: str, wfi: dict[str, Any]) -> list[str]:
         lines.append(f"Rarity: {wfi['rarity']}.")
     if wfi.get("polarity"):
         lines.append(f"Polarity: {wfi['polarity']}.")
+    if wfi.get("tradable") is False:
+        lines.append("Not tradable on market.")
 
     rank_fx = _rank_effects_summary(wfi)
     if rank_fx:
@@ -103,6 +128,9 @@ def _core_lines(slug: str, wfi: dict[str, Any]) -> list[str]:
     stats = _weapon_stats_summary(wfi)
     if stats:
         lines.append(f"Stats: {stats}.")
+    frame_stats = _warframe_stats_summary(wfi)
+    if frame_stats:
+        lines.append(f"Base stats: {frame_stats}.")
 
     if wfi.get("relic_rewards_summary"):
         lines.append(f"Relic rewards include: {wfi['relic_rewards_summary']}.")

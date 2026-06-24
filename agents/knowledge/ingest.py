@@ -101,6 +101,8 @@ def build_document(
 
     item_variant = derive_item_variant(slug, equipment_class)
 
+    sprint_speed = wfi.get("sprintSpeed") or wfi.get("sprint") or None
+
     return {
         "id": slug,
         "slug": slug,
@@ -120,6 +122,7 @@ def build_document(
         "wiki_link": compute_wiki_url(name, item_variant, equipment_class),
         "tier": tier,
         "item_variant": item_variant,
+        "sprint_speed": sprint_speed,
         "aliases": aliases,
         "effect_keywords": effects,
         "text_for_embedding": build_text_for_embedding(slug, wfi),

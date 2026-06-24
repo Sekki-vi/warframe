@@ -24,17 +24,23 @@ def _pick_wfi_fields(item: dict[str, Any]) -> dict[str, Any]:
         "category": item.get("category"),
         "type": item.get("type"),
         "description": item.get("description"),
+        "tradable": item.get("tradable"),
         "masteryReq": item.get("masteryReq"),
         "imageName": item.get("imageName"),
         "rarity": item.get("rarity"),
         "polarity": item.get("polarity"),
         "fusionLimit": item.get("fusionLimit"),
         "levelStats": item.get("levelStats"),
+        "vaulted": item.get("vaulted"),
         "isPrime": item.get("isPrime"),
     }
     if item.get("damage"):
         out["damage"] = item["damage"]
     for stat in ("criticalChance", "criticalMultiplier", "procChance", "fireRate", "totalDamage"):
+        if stat in item:
+            out[stat] = item[stat]
+    # Warframe base stats
+    for stat in ("health", "shield", "armor", "power", "sprintSpeed", "sprint"):
         if stat in item:
             out[stat] = item[stat]
     if item.get("relicRewards"):

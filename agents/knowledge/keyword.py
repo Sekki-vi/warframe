@@ -31,6 +31,7 @@ def _doc_to_hit(doc: dict[str, Any], source: str, score: float = 1.0) -> dict[st
         "wiki_link": wiki,
         "description": doc.get("description") or "",
         "text": doc.get("metadata_text") or doc.get("text") or "",
+        "sprint_speed": doc.get("sprint_speed"),
         "score": score,
         "source": source,
     }

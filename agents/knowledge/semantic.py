@@ -45,6 +45,7 @@ def _match_to_hit(match: Any) -> dict[str, Any]:
         "item_variant": meta.get("item_variant") or "",
         "description": meta.get("description") or "",
         "text": meta.get("text") or "",
+        "sprint_speed": float(meta["sprint_speed"]) if meta.get("sprint_speed") is not None else None,
         "score": float(match.score) if match.score is not None else 0.0,
         "source": "semantic",
     }
