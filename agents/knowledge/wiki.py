@@ -43,9 +43,10 @@ def compute_wiki_url(name: str, item_variant: str, equipment_class: str) -> str:
     — the wiki belongs on the parent frame or weapon, not its parts.
 
     URL patterns:
-      - Prime/Vandal/Wraith variants:  /w/BaseName/Variant  (e.g. Nova/Prime)
-      - Primed mods:                   /w/Primed_ModName     (e.g. Primed_Flow)
-      - Base items / Kuva / Tenet:     /w/Item_Name
+      - Warframe Prime variants:  /w/FrameName/Prime  (e.g. Nova/Prime, Ash/Prime)
+      - All other items:          /w/Full_Item_Name   (e.g. Cedo_Prime, Boltor_Vandal)
+      - Primed mods:              /w/Primed_ModName   (e.g. Primed_Flow)
+      - Base items / Kuva/Tenet:  /w/Item_Name
     """
     if not name or equipment_class == "unknown":
         return ""
@@ -54,11 +55,12 @@ def compute_wiki_url(name: str, item_variant: str, equipment_class: str) -> str:
     if name.lower().startswith("primed "):
         return f"{_WIKI_BASE}{name.replace(' ', '_')}"
 
-    label = _VARIANT_LABELS.get(item_variant)
-    if label and f" {label}" in name:
-        base = name[: name.rfind(f" {label}")].strip()
-        return f"{_WIKI_BASE}{base.replace(' ', '_')}/{label}"
+    # Only Warframe Prime entries use the BaseName/Prime slash format
+    if equipment_class == "warframes" and item_variant == "prime" and name.endswith(" Prime"):
+        base = name[: name.rfind(" Prime")].strip()
+        return f"{_WIKI_BASE}{base.replace(' ', '_')}/Prime"
 
+    # Everything else (weapons, companions, etc.) — full name with underscores
     return f"{_WIKI_BASE}{name.replace(' ', '_')}"
 
 
