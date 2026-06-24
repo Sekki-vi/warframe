@@ -1,0 +1,23 @@
+{
+  "arca_plasmor": {"tier": "S", "name": "Arca Plasmor"},
+  "cedo_prime": {"tier": "S", "name": "Cedo Prime"},
+  "felarx": {"tier": "S", "name": "Felarx"},
+  "cinta": {"tier": "S", "name": "Cinta"},
+  "sobek": {"tier": "A", "name": "Sobek"},
+  "corinth": {"tier": "A", "name": "Corinth"},
+  "boar_prime": {"tier": "B", "name": "Boar Prime"},
+  "boar": {"tier": "C", "name": "Boar"},
+  "strun": {"tier": "C", "name": "Strun"},
+  "braton": {"tier": "D", "name": "Braton"},
+  "soma_prime": {"tier": "S", "name": "Soma Prime"},
+  "bramma": {"tier": "S", "name": "Bramma"},
+  "laetum": {"tier": "S", "name": "Laetum"},
+  "tenet_arx": {"tier": "A", "name": "Tenet Arx"},
+  "acceltra": {"tier": "A", "name": "Acceltra"},
+  "fulmin": {"tier": "A", "name": "Fulmin"},
+  "kuva_bramma": {"tier": "S", "name": "Kuva Bramma"},
+  "kuva_nukor": {"tier": "S", "name": "Kuva Nukor"},
+  "ignis_wraith": {"tier": "S", "name": "Ignis Wraith"},
+  "rubico_prime": {"tier": "S", "name": "Rubico Prime"},
+  "euphona_prime": {"tier": "A", "name": "Euphona Prime"}
+}

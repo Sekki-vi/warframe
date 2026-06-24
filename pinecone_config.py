@@ -21,7 +21,7 @@ def get_config(*, require_api_keys: bool = True) -> dict:
         "openai_key": _clean_env(os.getenv("OPENAI_API_KEY", "")),
         "pinecone_key": _clean_env(os.getenv("PINECONE_API_KEY", "")),
         "index_name": _clean_env(os.getenv("PINECONE_INDEX", "")),
-        "namespace": _clean_env(os.getenv("PINECONE_NAMESPACE", "warframe-market")),
+        "namespace": _clean_env(os.getenv("PINECONE_NAMESPACE", "warframe-items")),
         "embed_model": os.getenv("EMBED_MODEL", "text-embedding-3-small"),
         "dimensions": int(os.getenv("EMBED_DIMENSIONS", "1536")),
         "batch_size": int(os.getenv("BATCH_SIZE", "100")),

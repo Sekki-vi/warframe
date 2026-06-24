@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ORDIS // Market Interface</title>
+  <title>ORDIS // Knowledge Interface</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,13 +15,13 @@
     <header class="header">
       <div class="header-inner">
         <div class="status-dot" aria-hidden="true"></div>
-        <h1>ORDIS <span class="divider">//</span> MARKET INTERFACE</h1>
+        <h1>ORDIS <span class="divider">//</span> KNOWLEDGE INTERFACE</h1>
         <button type="button"
                 id="clear-btn"
                 class="btn-secondary"
                 title="Clear conversation">RESET</button>
       </div>
-      <p class="subtitle">Warframe Market knowledge terminal — RAG-assisted queries</p>
+      <p class="subtitle">Warframe item knowledge from warframe-items (market subsystem offline)</p>
     </header>
 
     <main class="chat-panel">
@@ -29,17 +29,18 @@
         <div class="message ordis">
           <div class="message-label">ORDIS</div>
           <div class="message-body">
-            Operator, the market interface is online. I can provide item descriptions,
-            statistics, and historical price aggregates from the indexed corpus.
+            Operator, the knowledge subsystem is online. I can describe items, stats, mods,
+            and drop locations from the warframe-items corpus. Market pricing is handled by
+            a separate subsystem that is not yet connected.
             How may I assist you?
           </div>
         </div>
       </div>
 
       <div class="prompt-chips" id="prompt-chips">
-        <button type="button" class="chip" data-prompt="What is Primed Flow and what is the typical price?">Primed Flow</button>
-        <button type="button" class="chip" data-prompt="How much is Nova Prime Set?">Nova Prime Set</button>
-        <button type="button" class="chip" data-prompt="Tell me about Arcane Energize">Arcane Energize</button>
+        <button type="button" class="chip" data-prompt="What is Primed Flow?">Primed Flow</button>
+        <button type="button" class="chip" data-prompt="Recommend a shotgun">Shotgun recommendations</button>
+        <button type="button" class="chip" data-prompt="What shotgun mods should I use?">Shotgun mods</button>
       </div>
 
       <form id="chat-form" class="input-row">

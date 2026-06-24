@@ -1,71 +1,77 @@
-# Warframe Market RAG
+# Warframe Market RAG + Live Market Agent
 
-RAG chatbot for Warframe Market — item descriptions, stats, and historical price aggregates from a May 30 order scrape, enriched with [Warframe Market v2](https://api.warframe.market/v2/) and [WFCD/warframe-items](https://github.com/WFCD/warframe-items).
+Ordis-style chatbot combining **warframe-items** knowledge (Pinecone RAG) with **live** warframe.market API data for prices and sellers.
 
-Includes a Flask UI with Ordis-style Cephalon persona (`python3 app.py`).
+## Architecture
+
+| Layer | Source | Purpose |
+|-------|--------|---------|
+| Knowledge | WFCD `All.json` → Pinecone `warframe-items` | Item stats, descriptions, drops |
+| Market (live) | WFM v2 API | Current orders, prices, sellers |
+
+The orchestrator retrieves WFI knowledge for every message, then calls the **market agent** (function tools) when the operator asks about prices or sellers.
 
 ## Collaborator setup
 
-1. **Clone the repo**
+1. **Clone** and `pip install -r requirements.txt`
+2. Copy `.env.example` → `.env` and fill in API keys
+3. **Build knowledge index** (first time):
    ```bash
-   git clone <repo-url>
-   cd warframe
+   python3 build_wfi_docs.py --force-wfm   # tradable-only corpus (~2.5k items)
+   python3 upsert_pinecone.py
    ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure environment**
-   ```bash
-   cp .env.example .env
-   ```
-   Fill in `OPENAI_API_KEY` and `PINECONE_API_KEY`. Share keys outside git (Slack, 1Password, etc.) or use your own accounts.
-
-4. **Optional — orders CSV path** (only for data pipeline / orders DB)
-   Set `ORDERS_DATA_DIR` in `.env` to the folder containing `warframe_all_orders_raw.csv`.
-
-5. **Run the chat UI**
+4. **Run chat UI:**
    ```bash
    python3 app.py
    ```
-   Open `http://127.0.0.1:5001` (port 5000 is often blocked on macOS by AirPlay Receiver).
+   Open `http://127.0.0.1:5001` (port 5000 often blocked on macOS).
 
-6. **Optional — rebuild data locally**
-   ```bash
-   python3 build_pipeline.py --skip-fetch   # from cache (no API calls)
-   python3 build_pipeline.py                # full WFM enrichment (~25 min)
-   python3 build_orders_db.py               # SQLite seller lookup DB
-   python3 upsert_pinecone.py               # re-index to Pinecone
-   ```
+### Pinecone
 
-### Adding collaborators on GitHub
+- Index: `warframe` (1536-dim, cosine)
+- Namespace: `warframe-items`
 
-Repo owner: **Settings → Collaborators → Add people** (by GitHub username).
+## Commands
 
-Each collaborator needs:
-- Accepted GitHub invite
-- Their own `.env` (from `.env.example`)
-- Access to the shared Pinecone index `warframe` / namespace `warframe-market`, or their own index after re-upserting
+```bash
+# Build WFI-only RAG documents (tradable warframe.market items only, ~2.5k)
+python3 build_wfi_docs.py
+python3 build_wfi_docs.py --force-wfm   # refresh tradable slug list from WFM API
 
-## Generated outputs (not in git)
+# Upsert to Pinecone (deletes stale vectors when corpus shrinks)
+python3 upsert_pinecone.py
 
-Large files are gitignored; rebuild locally or use the shared Pinecone index.
+# Refresh Overframe tier lists (optional; see docs/tier_list_refresh.md)
+python3 build_tier_lists.py --from-json
+python3 build_wfi_docs.py
 
-| File | Description |
-|------|-------------|
-| `data/processed/order_aggregates.json` | Price stats per `(slug, rank, subtype)` |
-| `data/processed/rag_documents.jsonl` | Merged RAG documents (~8.5k groups) |
-| `data/processed/orders.db` | SQLite order/seller lookup |
-| `data/processed/sample_documents.json` | Small examples (committed) |
+# Run Flask chat
+python3 app.py
+```
 
-## Data sources
+## Deprecated (legacy pipeline)
 
-- **Orders:** `warframe_all_orders_raw.csv` (959k rows, snapshot 2026-05-30)
-- **WFM v2:** `GET /v2/items` + `GET /v2/item/{slug}` + `GET /v2/item/{slug}/set`
-- **WFI:** `All.json` from GitHub, joined via `gameRef` = `uniqueName`
+These scripts are kept for reference but are **not used** by the chatbot:
 
-## Note on WFM descriptions
+- `build_pipeline.py`, `merge_rag_docs.py`, `aggregate_orders.py` — old merged market+WFI docs
+- `build_orders_db.py`, `orders_lookup.py` — May 30 CSV snapshot (replaced by live API)
 
-The bulk `/v2/items` endpoint only includes names and icons. Run `python3 build_pipeline.py` (without `--skip-fetch`) once to pull full descriptions from `/v2/item/{slug}` for all slugs.
+## Market API tools
+
+The market agent calls:
+
+- `GET /v2/items/{slug}/orders` — live orders
+- `GET /v2/orders/item/{slug}/top` — top buy/sell
+- `GET /v2/items/{slug}/statistics` — price statistics
+
+Rate limit: ~3 requests/second.
+
+## Adding collaborators
+
+GitHub repo → **Settings** → **Collaborators**. Share `.env` values outside git.
+
+Each collaborator needs OpenAI + Pinecone access (shared index or re-upsert to their own).
+
+## Tier list refresh
+
+Weapon recommendations rank by Overframe tier data in `data/tier_lists/`. See [docs/tier_list_refresh.md](docs/tier_list_refresh.md) for weekly scrape/cron setup (`pip install -r requirements-tier.txt` for Playwright).

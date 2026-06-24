@@ -42,7 +42,6 @@ def api_chat():
         {
             "reply": result["reply"],
             "sources": result["sources"],
-            "snapshot_date": result.get("snapshot_date"),
         }
     )
 

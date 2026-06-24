@@ -12,9 +12,9 @@
     return div.innerHTML;
   }
 
-  function formatPrice(val) {
-    if (val === null || val === undefined) return null;
-    return `${Math.round(val)}p`;
+  function truncate(text, maxLen) {
+    if (!text || text.length <= maxLen) return text || "";
+    return text.slice(0, maxLen - 1).trim() + "…";
   }
 
   function renderSources(sources) {
@@ -25,34 +25,24 @@
         ? `<img src="${escapeHtml(src.image_url)}" alt="" loading="lazy">`
         : `<div class="no-img">?</div>`;
 
-      const rankLabel = src.rank != null ? ` · rank ${src.rank}` : "";
-      const subtypeLabel = src.subtype ? ` · ${escapeHtml(src.subtype)}` : "";
-      const sell = formatPrice(src.sell_median);
-      const buy = formatPrice(src.buy_median);
-      const prices = [
-        sell ? `Sell median: ${sell}` : null,
-        buy ? `Buy median: ${buy}` : null,
-      ].filter(Boolean).join(" · ");
-
+      const desc = truncate(src.description || "", 200);
+      const tier = src.tier
+        ? `<span class="tier-badge tier-${escapeHtml(src.tier.toLowerCase())}">${escapeHtml(src.tier)}</span>`
+        : "";
       const wiki = src.wiki_link
         ? `<a href="${escapeHtml(src.wiki_link)}" target="_blank" rel="noopener">Wiki</a>`
         : "";
-
-      const snapshot = src.price_snapshot_date
-        ? `<span class="snapshot-badge">Snapshot: ${escapeHtml(src.price_snapshot_date)}</span>`
+      const descBlock = desc
+        ? `<p class="source-desc">${escapeHtml(desc)}</p>`
         : "";
 
       return `
         <div class="source-card">
           ${img}
           <div class="source-info">
-            <h4>${escapeHtml(src.item_name || src.slug)}</h4>
-            <div class="source-meta">
-              ${escapeHtml(src.slug)}${rankLabel}${subtypeLabel}
-              ${prices ? `<br><span class="price">${escapeHtml(prices)}</span>` : ""}
-              ${snapshot}
-              ${wiki ? `<br>${wiki}` : ""}
-            </div>
+            <h4>${escapeHtml(src.name || "")} ${tier}</h4>
+            ${descBlock}
+            ${wiki ? `<div class="source-links">${wiki}</div>` : ""}
           </div>
         </div>`;
     }).join("");
@@ -60,10 +50,11 @@
     return `<div class="sources">${cards}</div>`;
   }
 
-  function appendMessage(role, text, sources) {
+  function appendMessage(role, text, extras) {
     const wrap = document.createElement("div");
     wrap.className = `message ${role}`;
     const label = role === "user" ? "OPERATOR" : "ORDIS";
+    const sources = extras && extras.sources;
     wrap.innerHTML = `
       <div class="message-label">${label}</div>
       <div class="message-body">${escapeHtml(text)}</div>
@@ -113,7 +104,7 @@
         return;
       }
 
-      appendMessage("ordis", data.reply, data.sources);
+      appendMessage("ordis", data.reply, { sources: data.sources });
     } catch (err) {
       loadingEl.remove();
       appendMessage("ordis", `Connection lost, Operator. ${err.message}`);
@@ -135,7 +126,7 @@
         <div class="message ordis">
           <div class="message-label">ORDIS</div>
           <div class="message-body">
-            Conversation buffer cleared, Operator. The market interface remains online.
+            Conversation buffer cleared, Operator. The knowledge subsystem remains online.
           </div>
         </div>`;
     } catch (err) {

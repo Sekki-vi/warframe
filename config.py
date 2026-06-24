@@ -26,6 +26,8 @@ WFM_SETS_JSON = CACHE_DIR / "wfm_prime_sets.json"
 AGGREGATES_JSON = PROCESSED_DIR / "order_aggregates.json"
 RAG_DOCS_JSON = PROCESSED_DIR / "rag_documents.json"
 RAG_DOCS_JSONL = PROCESSED_DIR / "rag_documents.jsonl"
+WFI_RAG_DOCS_JSONL = PROCESSED_DIR / "wfi_rag_documents.jsonl"
+ALIAS_INDEX_JSON = PROCESSED_DIR / "alias_index.json"
 ORDERS_DB = PROCESSED_DIR / "orders.db"
 
 WFM_API_BASE = "https://api.warframe.market/v2"

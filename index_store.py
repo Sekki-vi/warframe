@@ -1,4 +1,4 @@
-"""Embed RAG documents and upsert into Pinecone."""
+"""Embed WFI RAG documents and upsert into Pinecone."""
 from __future__ import annotations
 
 import hashlib
@@ -8,7 +8,7 @@ from typing import Any
 from openai import OpenAI
 from pinecone import Pinecone
 
-from config import RAG_DOCS_JSONL
+from config import WFI_RAG_DOCS_JSONL
 from pinecone_config import get_config
 
 
@@ -21,31 +21,29 @@ def pinecone_id(doc_id: str) -> str:
 
 
 def _build_metadata(doc: dict[str, Any]) -> dict[str, Any]:
-    market = doc.get("market") or {}
-    wfm = doc.get("wfm") or {}
-    wfi = doc.get("wfi") or {}
-    sell = market.get("sell") or {}
-    buy = market.get("buy") or {}
-
     meta: dict[str, Any] = {
         "doc_id": doc.get("id") or "",
-        "text": doc.get("text_for_embedding") or "",
+        "text": doc.get("metadata_text") or "",
         "slug": doc.get("slug") or "",
-        "rank": doc["rank"] if doc.get("rank") is not None else -1,
-        "subtype": doc.get("subtype") or "",
-        "item_name": market.get("item_name") or "",
-        "is_prime_part": bool(market.get("is_prime_part")),
-        "price_snapshot_date": market.get("price_snapshot_date") or "",
+        "name": doc.get("name") or "",
+        "unique_name": doc.get("unique_name") or "",
+        "category": doc.get("category") or "",
+        "type": doc.get("type") or "",
+        "equipment_class": doc.get("equipment_class") or "",
+        "weapon_subtype": doc.get("weapon_subtype") or "",
+        "taxonomy": doc.get("taxonomy") or "",
         "image_url": doc.get("image_url") or "",
-        "wiki_link": wfm.get("wikiLink") or "",
-        "category": wfi.get("category") or "",
+        "wiki_link": doc.get("wiki_link") or "",
+        "tier": doc.get("tier") or "",
+        "item_variant": doc.get("item_variant") or "",
+        "description": doc.get("description") or "",
+        "aliases": doc.get("aliases") or "",
+        "rarity": doc.get("rarity") or "",
+        "polarity": doc.get("polarity") or "",
     }
-    if sell:
-        meta["sell_median"] = float(sell.get("platinum_median", 0))
-        meta["sell_count"] = int(sell.get("count", 0))
-    if buy:
-        meta["buy_median"] = float(buy.get("platinum_median", 0))
-        meta["buy_count"] = int(buy.get("count", 0))
+    wfm_slug = doc.get("wfm_slug")
+    if wfm_slug:
+        meta["wfm_slug"] = wfm_slug
     return meta
 
 
@@ -54,19 +52,21 @@ def embed_batch(client: OpenAI, model: str, texts: list[str]) -> list[list[float
     return [item.embedding for item in resp.data]
 
 
-def index_documents(docs: list[dict[str, Any]] | None = None) -> None:
-    """Embed and upsert RAG documents into Pinecone."""
+def index_documents(docs: list[dict[str, Any]] | None = None, *, delete_stale: bool = True) -> None:
+    """Embed and upsert WFI RAG documents into Pinecone."""
     cfg = get_config()
 
     if docs is None:
         docs = []
-        with RAG_DOCS_JSONL.open(encoding="utf-8") as f:
+        with WFI_RAG_DOCS_JSONL.open(encoding="utf-8") as f:
             for line in f:
                 docs.append(json.loads(line))
 
     if not docs:
         print("No documents to index.")
         return
+
+    new_ids = {pinecone_id(doc["id"]) for doc in docs}
 
     pc = Pinecone(api_key=cfg["pinecone_key"])
     desc = pc.describe_index(cfg["index_name"])
@@ -77,6 +77,14 @@ def index_documents(docs: list[dict[str, Any]] | None = None) -> None:
         )
 
     index = pc.Index(cfg["index_name"])
+
+    if delete_stale:
+        stats = index.describe_index_stats()
+        ns_stats = stats.get("namespaces", {}).get(cfg["namespace"], {})
+        if ns_stats.get("vector_count", 0) > len(docs):
+            print("Deleting stale vectors from namespace ...")
+            index.delete(delete_all=True, namespace=cfg["namespace"])
+
     client = OpenAI(api_key=cfg["openai_key"])
     batch_size = cfg["batch_size"]
     total = len(docs)
@@ -100,5 +108,6 @@ def index_documents(docs: list[dict[str, Any]] | None = None) -> None:
     ns_stats = stats.get("namespaces", {}).get(cfg["namespace"], {})
     print(
         f"Indexed {total} documents into Pinecone index '{cfg['index_name']}' "
-        f"(namespace '{cfg['namespace']}', vectors in namespace: {ns_stats.get('vector_count', '?')})"
+        f"(namespace '{cfg['namespace']}', vectors in namespace: {ns_stats.get('vector_count', '?')}, "
+        f"unique ids: {len(new_ids)})"
     )

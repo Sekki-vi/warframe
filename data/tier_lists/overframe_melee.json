@@ -1,0 +1,12 @@
+{
+  "paracesis": {"tier": "S", "name": "Paracesis"},
+  "kuva_nukor_melee": {"tier": "S", "name": "Kuva Nukor"},
+  "gram_prime": {"tier": "S", "name": "Gram Prime"},
+  "broken_war": {"tier": "A", "name": "Broken War"},
+  "galatine_prime": {"tier": "S", "name": "Galatine Prime"},
+  "nikana_prime": {"tier": "A", "name": "Nikana Prime"},
+  "orthos": {"tier": "C", "name": "Orthos"},
+  "skana": {"tier": "D", "name": "Skana"},
+  "iron_staff": {"tier": "B", "name": "Iron Staff"},
+  "pangolin_prime": {"tier": "A", "name": "Pangolin Prime"}
+}
