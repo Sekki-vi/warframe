@@ -6,6 +6,7 @@ from typing import Any
 from openai import OpenAI
 from pinecone import Pinecone
 
+from agents.knowledge.wiki import component_display_name, compute_wiki_url
 from chat.config import get_chat_config
 
 _index = None
@@ -25,20 +26,23 @@ def _clients() -> tuple[dict, OpenAI, Any]:
 
 def _match_to_hit(match: Any) -> dict[str, Any]:
     meta = match.metadata or {}
+    slug = meta.get("slug") or ""
+    ec = meta.get("equipment_class") or ""
+    name = component_display_name(slug, meta.get("name") or "", ec)
+    wiki = compute_wiki_url(name, meta.get("item_variant") or "", ec)
     return {
         "doc_id": meta.get("doc_id") or "",
-        "name": meta.get("name") or "",
-        "slug": meta.get("slug") or "",
+        "name": name,
+        "slug": slug,
         "category": meta.get("category") or "",
         "type": meta.get("type") or "",
-        "equipment_class": meta.get("equipment_class") or "",
+        "equipment_class": ec,
         "weapon_subtype": meta.get("weapon_subtype") or "",
         "taxonomy": meta.get("taxonomy") or "",
         "image_url": meta.get("image_url") or "",
-        "wiki_link": meta.get("wiki_link") or "",
+        "wiki_link": wiki,
         "tier": meta.get("tier") or "",
         "item_variant": meta.get("item_variant") or "",
-        "wfm_slug": meta.get("wfm_slug") or "",
         "description": meta.get("description") or "",
         "text": meta.get("text") or "",
         "score": float(match.score) if match.score is not None else 0.0,

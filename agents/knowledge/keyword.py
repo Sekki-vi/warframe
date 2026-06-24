@@ -7,24 +7,28 @@ from agents.knowledge.alias_index import load_alias_index
 from agents.knowledge.intent import QueryIntent, _detect_mods_query, _detect_subtypes, strip_question_prefix
 from agents.knowledge.rank import is_warframe_doc, rank_candidates
 from agents.knowledge.tier_lists import lookup_tier
+from agents.knowledge.wiki import component_display_name, compute_wiki_url
 from wfi_lookup import slugify
 
 
 def _doc_to_hit(doc: dict[str, Any], source: str, score: float = 1.0) -> dict[str, Any]:
+    slug = doc.get("slug") or doc.get("id") or ""
+    ec = doc.get("equipment_class") or ""
+    name = component_display_name(slug, doc.get("name") or "", ec)
+    wiki = compute_wiki_url(name, doc.get("item_variant") or "", ec)
     return {
-        "doc_id": doc.get("id") or doc.get("slug") or "",
-        "name": doc.get("name") or "",
-        "slug": doc.get("slug") or "",
+        "doc_id": slug or doc.get("id") or "",
+        "name": name,
+        "slug": slug,
         "category": doc.get("category") or "",
         "type": doc.get("type") or "",
-        "equipment_class": doc.get("equipment_class") or "",
+        "equipment_class": ec,
         "weapon_subtype": doc.get("weapon_subtype") or "",
         "taxonomy": doc.get("taxonomy") or "",
         "tier": doc.get("tier") or "",
         "item_variant": doc.get("item_variant") or "",
-        "wfm_slug": doc.get("wfm_slug") or "",
         "image_url": doc.get("image_url") or "",
-        "wiki_link": doc.get("wiki_link") or "",
+        "wiki_link": wiki,
         "description": doc.get("description") or "",
         "text": doc.get("metadata_text") or doc.get("text") or "",
         "score": score,

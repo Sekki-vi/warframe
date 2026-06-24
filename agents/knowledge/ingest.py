@@ -15,6 +15,7 @@ from agents.knowledge.tradable_registry import (
     should_include_wfi_doc,
 )
 from agents.knowledge.variants import derive_item_variant
+from agents.knowledge.wiki import component_display_name, compute_wiki_url
 from config import WFI_CDN_BASE, WFI_RAG_DOCS_JSONL
 from wfi_lookup import load_or_build_lookup, slugify
 from wfm_catalog import WFM_DETAILS_JSON, fetch_items_manifest
@@ -80,7 +81,6 @@ def build_document(
     slug: str,
     wfi: dict[str, Any],
     *,
-    wiki_link: str = "",
     wfm_slug: str = "",
 ) -> dict[str, Any]:
     category = wfi.get("category") or ""
@@ -91,7 +91,8 @@ def build_document(
     if wfi.get("imageName"):
         image_url = WFI_CDN_BASE + wfi["imageName"]
 
-    name = wfi.get("name") or slug
+    raw_name = wfi.get("name") or slug
+    name = component_display_name(slug, raw_name, equipment_class)
     aliases = slugify(name)
     effects = effect_keyword_list(wfi)
     tier = ""
@@ -111,11 +112,12 @@ def build_document(
         "equipment_class": equipment_class,
         "weapon_subtype": weapon_subtype,
         "taxonomy": taxonomy,
+        "tradable": True,
         "wfm_slug": wfm_slug,
         "rarity": wfi.get("rarity") or "",
         "polarity": wfi.get("polarity") or "",
         "image_url": image_url,
-        "wiki_link": wiki_link,
+        "wiki_link": compute_wiki_url(name, item_variant, equipment_class),
         "tier": tier,
         "item_variant": item_variant,
         "aliases": aliases,
@@ -147,7 +149,6 @@ def build_documents(*, force_wfm: bool = False) -> list[dict[str, Any]]:
             equipment_class=equipment_class,
             item_variant=item_variant,
             tradable_slugs=tradable_slugs,
-            wfm_by_slug=wfm_by_slug,
             name_to_wfm=name_to_wfm,
             wfi_to_wfm=wfi_to_wfm,
         )
@@ -158,15 +159,7 @@ def build_documents(*, force_wfm: bool = False) -> list[dict[str, Any]]:
         wfm_slug = resolve_tradable_wfm_slug(
             slug, wfi, tradable_slugs, name_to_wfm, wfi_to_wfm
         ) or ""
-        wiki_link = _resolve_wiki_link(slug, wfi, wfm_by_slug, name_to_wfm, wfi_to_wfm)
-        docs.append(
-            build_document(
-                slug,
-                wfi,
-                wiki_link=wiki_link,
-                wfm_slug=wfm_slug,
-            )
-        )
+        docs.append(build_document(slug, wfi, wfm_slug=wfm_slug))
 
     print(f"Excluded: {dict(excluded)}")
     return docs
