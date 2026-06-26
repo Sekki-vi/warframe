@@ -319,9 +319,87 @@ _RECOMMEND_WORDS = re.compile(
     re.I,
 )
 _QUESTION_PREFIX = re.compile(
-    r"^(?:what is|what are|tell me about|describe|info on|who is)\s+",
+    r"^(?:what is|what are|what does(?: the)?|tell me about|describe|info on|who is)\s+",
     re.I,
 )
+_SIGNATURE_WEAPON = re.compile(
+    r"\bsignature\s+(?:weapon|weapons|rifle|pistol|shotgun|bow|melee|sword|gun)\b",
+    re.I,
+)
+_DESCRIPTIVE_QUERY = re.compile(
+    r"\b("
+    r"accuracy|magazine|damage|crit|critical|status|fire rate|multishot|"
+    r"punch through|range|reload|polarity|capacity|duration|efficiency|"
+    r"strength|health|shield|armor|sprint|ability|passive|obtain|location|"
+    r"where|how|what does|describe|tell me about|large|heavy|fast"
+    r")\b",
+    re.I,
+)
+_QUERY_TOKEN_STOP = frozenset(
+    {
+        "what",
+        "does",
+        "the",
+        "do",
+        "is",
+        "are",
+        "about",
+        "tell",
+        "me",
+        "describe",
+        "how",
+        "who",
+        "which",
+        "when",
+        "where",
+        "why",
+        "a",
+        "an",
+        "this",
+        "that",
+        "weapon",
+        "weapons",
+        "warframe",
+        "warframes",
+        "good",
+        "best",
+        "any",
+        "some",
+        "with",
+        "for",
+        "and",
+        "or",
+        "shotgun",
+        "rifle",
+        "pistol",
+        "bow",
+        "melee",
+        "launcher",
+        "sniper",
+        "thrown",
+        "throwing",
+        "glaive",
+        "whip",
+        "staff",
+        "polearm",
+        "claws",
+        "dagger",
+        "machete",
+        "hammer",
+        "sword",
+        "katana",
+        "gun",
+        "guns",
+        "assault",
+        "prime",
+        "vandal",
+        "wraith",
+        "kuva",
+        "tenet",
+        "prisma",
+    }
+)
+_WEAPON_EQUIPMENT = ("primary", "secondary", "melee", "archgun", "archmelee")
 _TIER_FILTER = re.compile(
     r"\b([SABCD])\s*(?:-?\s*tier|-?\s*rank)\b|\b(?:tier|rank)\s*([SABCD])\b",
     re.I,
@@ -714,6 +792,111 @@ def exact_match(query: str, index: dict[str, Any] | None = None) -> dict[str, An
     return None
 
 
+def _embedded_exact_match(query: str, index: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Match a known item name embedded in a longer question (e.g. 'soma rifle do' -> soma)."""
+    index = index or load_alias_index()
+    docs_by_id = index["docs_by_id"]
+    tokens = [
+        token
+        for token in re.findall(r"[a-z0-9]+", query.lower())
+        if token not in _QUERY_TOKEN_STOP and len(token) >= 2
+    ]
+    if not tokens:
+        return None
+
+    for size in (3, 2, 1):
+        for i in range(len(tokens) - size + 1):
+            chunk_tokens = tokens[i : i + size]
+            chunk = "_".join(chunk_tokens)
+            phrase = " ".join(chunk_tokens)
+            doc_id = (
+                index["slug_to_doc"].get(chunk)
+                or index["alias_to_doc"].get(chunk)
+                or index["name_to_doc"].get(phrase)
+            )
+            if doc_id and doc_id in docs_by_id:
+                return _doc_to_hit(docs_by_id[doc_id], "exact", 1.0)
+    return None
+
+
+def _frames_in_query(query: str, index: dict[str, Any]) -> list[tuple[str, str]]:
+    q = query.lower()
+    frames: list[tuple[str, str]] = []
+    for doc_id in index.get("equipment_class_to_docs", {}).get("warframes", []):
+        doc = index["docs_by_id"].get(doc_id)
+        if not doc or not is_warframe_doc(doc):
+            continue
+        slug = doc.get("slug") or ""
+        base_slug = slug.removesuffix("_prime")
+        name = (doc.get("name") or "").lower().replace(" prime", "").strip()
+        if base_slug and base_slug in q:
+            frames.append((slug, doc.get("name") or name.title()))
+        elif name and re.search(rf"\b{re.escape(name)}\b", q):
+            frames.append((slug, doc.get("name") or name.title()))
+    return frames
+
+
+def _signature_weapon_match(query: str, index: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Resolve '<Frame> signature weapon' to the weapon whose lore text names that frame."""
+    if not _SIGNATURE_WEAPON.search(query):
+        return None
+    index = index or load_alias_index()
+    frames = _frames_in_query(query, index)
+    if not frames:
+        return None
+
+    _, frame_name = max(frames, key=lambda item: len(item[1]))
+    frame_key = frame_name.lower().replace(" prime", "").strip()
+    pattern = re.compile(
+        rf"{re.escape(frame_key)}['']?s signature|"
+        rf"signature (?:weapon|weapons|rifle|pistol|shotgun|bow|melee|gun)s? (?:of )?{re.escape(frame_key)}|"
+        rf"{re.escape(frame_key)}.*\bsignature\b",
+        re.I,
+    )
+
+    candidates: list[dict[str, Any]] = []
+    for ec in _WEAPON_EQUIPMENT:
+        for doc_id in index.get("equipment_class_to_docs", {}).get(ec, []):
+            doc = index["docs_by_id"].get(doc_id)
+            if not doc:
+                continue
+            text = f"{doc.get('description') or ''} {doc.get('metadata_text') or ''}"
+            if pattern.search(text):
+                candidates.append(doc)
+
+    if not candidates:
+        return None
+
+    candidates.sort(
+        key=lambda doc: (
+            0 if (doc.get("item_variant") or "base") == "base" else 1,
+            0 if doc.get("weapon_subtype") != "companion_weapon" else 1,
+            doc.get("name") or "",
+        )
+    )
+    return _doc_to_hit(candidates[0], "keyword", 0.95)
+
+
+def _should_taxonomy_browse(query: str, intent: QueryIntent) -> bool:
+    has_browse = intent.subtypes or intent.browse_equipment_class or (
+        intent.variant and not intent.want_mods
+    )
+    if not has_browse:
+        return False
+    if _DESCRIPTIVE_QUERY.search(query):
+        return False
+    if intent.kind in ("random", "recommend"):
+        return True
+    if intent.kind != "lookup":
+        return False
+    return bool(
+        _RECOMMEND_WORDS.search(query)
+        or _RANDOM_WORDS.search(query)
+        or intent.tier_filter
+        or _parse_explicit_count(query) is not None
+    )
+
+
 def _filter_pool(pool: list[dict[str, Any]], intent: QueryIntent) -> list[dict[str, Any]]:
     if intent.variant:
         pool = [d for d in pool if (d.get("item_variant") or "base") == intent.variant]
@@ -884,19 +1067,25 @@ def keyword_search(
     if exact:
         return [exact]
 
+    signature = _signature_weapon_match(query, index)
+    if signature:
+        return [signature]
+
+    embedded = _embedded_exact_match(query, index)
+    if embedded:
+        return [embedded]
+
     if intent.kind == "single":
         return []
 
-    has_browse = intent.subtypes or intent.browse_equipment_class or (
-        intent.variant and not intent.want_mods
-    )
-
-    if has_browse and (intent.kind in ("random", "recommend") or _detect_mods_query(query)):
+    if _should_taxonomy_browse(query, intent) and (
+        intent.kind in ("random", "recommend") or _detect_mods_query(query)
+    ):
         tax_hits = taxonomy_search(query, intent, index)
         if tax_hits:
             return tax_hits
 
-    if has_browse and intent.kind == "lookup":
+    if _should_taxonomy_browse(query, intent) and intent.kind == "lookup":
         pool = _collect_taxonomy_pool(query, index, intent)
         if pool and not _detect_mods_query(query):
             browse_intent = QueryIntent(
@@ -918,6 +1107,37 @@ def keyword_search(
     return []
 
 
+
+
+def _text_overlap_score(query: str, hit: dict[str, Any]) -> float:
+    tokens = [
+        token
+        for token in re.findall(r"[a-z0-9]+", query.lower())
+        if token not in _QUERY_TOKEN_STOP and len(token) >= 3
+    ]
+    if not tokens:
+        return 0.0
+    text = (hit.get("text") or hit.get("description") or "").lower()
+    return sum(1 for token in tokens if token in text) / len(tokens)
+
+
+def _filter_hits_by_subtypes(
+    hits: list[dict[str, Any]],
+    subtypes: list[str],
+) -> list[dict[str, Any]]:
+    if not subtypes:
+        return hits
+    allowed = {
+        f"{equipment_class}/{subtype}"
+        for subtype in subtypes
+        for equipment_class in ("primary", "secondary", "melee", "archgun", "archmelee")
+    }
+    filtered = [
+        hit
+        for hit in hits
+        if hit.get("taxonomy") in allowed or hit.get("weapon_subtype") in subtypes
+    ]
+    return filtered or hits
 
 
 def _is_noise_hit(hit: dict[str, Any]) -> bool:
@@ -1068,7 +1288,17 @@ def retrieve(query: str) -> tuple[list[dict[str, Any]], QueryIntent]:
     keyword_hits = keyword_search(query, intent)
     if keyword_hits:
         return keyword_hits[:1], intent
-    semantic_hits = semantic_search(query, top_k=1)
+
+    descriptive = bool(_DESCRIPTIVE_QUERY.search(query))
+    semantic_hits = semantic_search(query, top_k=5 if descriptive else 1)
+    if descriptive and semantic_hits:
+        semantic_hits = _filter_hits_by_subtypes(semantic_hits, intent.subtypes)
+        semantic_hits.sort(
+            key=lambda hit: (_text_overlap_score(query, hit) * 2.0 + float(hit.get("score") or 0)),
+            reverse=True,
+        )
+        semantic_hits = semantic_hits[:1]
+
     hits = merge_hits(keyword_hits, semantic_hits, max_results=1)
     return hits[:1], intent
 
