@@ -1,13 +1,13 @@
-"""Pinecone and OpenAI config for vector indexing."""
+"""Load OpenAI and Pinecone settings from .env."""
 from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+from config.paths import PROJECT_ROOT
+
 _PLACEHOLDERS = ("sk-...", "pcsk_...", "your-existing-index-name", "")
 
 
@@ -15,7 +15,7 @@ def _clean_env(value: str) -> str:
     return value.strip().strip("'").strip('"')
 
 
-def get_config(*, require_api_keys: bool = True) -> dict:
+def get_pinecone_config(*, require_api_keys: bool = True) -> dict:
     load_dotenv(PROJECT_ROOT / ".env")
     cfg = {
         "openai_key": _clean_env(os.getenv("OPENAI_API_KEY", "")),

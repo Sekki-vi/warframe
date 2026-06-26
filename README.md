@@ -14,7 +14,8 @@ Knowledge does **not** embed tier data. Ranking is a separate JSON lookup the ma
 1. `pip install -r requirements.txt`
 2. Copy `.env.example` → `.env` and fill in API keys
 3. Ensure local runtime data exists (not in git):
-   - `data/processed/alias_index.json`
+   - `data/processed/knowledge_index.json` (required)
+   - `data/processed/knowledge_corpus.jsonl` (optional archive)
    - `data/cache/` (tradable slugs, wfi lookup, etc.)
 4. Pinecone index `warframe`, namespace `warframe` must already be populated
 

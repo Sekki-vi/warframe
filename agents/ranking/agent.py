@@ -4,10 +4,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from agents.knowledge.alias_index import load_alias_index
+from agents.knowledge.agent import load_alias_index
 from agents.ranking.enrich import enrich_response
 from agents.ranking.tier_store import lookup_tier, parse_tier_filter, slugs_for_tier
-from wfi_lookup import slugify
+from agents.knowledge.wfi_lookup import slugify
 
 _ITEM_QUERY = re.compile(
     r"\b(warframe|weapon|rifle|pistol|shotgun|melee|bow|archwing|companion|"

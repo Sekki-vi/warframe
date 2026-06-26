@@ -1,9 +1,9 @@
-"""Shared agent configuration (OpenAI, Pinecone, chat settings)."""
+"""Agent runtime settings (OpenAI chat + Pinecone retrieval)."""
 from __future__ import annotations
 
 import os
 
-from pinecone_config import get_config as get_pinecone_config
+from config.pinecone import get_pinecone_config
 
 
 def get_agent_config(*, require_api_keys: bool = True) -> dict:
