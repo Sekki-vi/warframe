@@ -3,6 +3,7 @@ Warframe Market Agent — API wrapper.
 Scope: item search, item details, live buy/sell orders only.
 Statistics/forecasting is handled by the Forecasting Agent (separate sub-agent).
 """
+from __future__ import annotations
 
 import requests
 

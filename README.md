@@ -6,6 +6,7 @@ Library agents for a future Ordis-style manager:
 |-------|--------|---------|
 | Knowledge | Pinecone + local alias index | Non-tradable item descriptions, stats, drops |
 | Ranking | `data/tier_lists/overframe.json` | Overframe tier lookup (S–D) |
+| Market | Warframe Market v2 API | Live buy/sell orders, prices, seller activity, portfolio |
 | Forecasting | Warframe Market statistics | Price forecasts, item comparison, LLM Q&A |
 
 Knowledge does **not** embed tier data. Ranking is a separate JSON lookup the manager will call later.
@@ -59,7 +60,34 @@ print(answer["answer"])
 
 **Skills:** `forecast_item`, `compare_items`, `ask_market_question` (requires `OPENAI_API_KEY`).
 
-Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL` if a manager will serve them over HTTP.
+Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL=http://localhost:8502` when using the Manager (serves `/charts/`).
+
+### Manager + UI
+
+```bash
+uvicorn agents.manager.api:app --host 0.0.0.0 --port 8502
+streamlit run app.py
+```
+
+### Market
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+
+from agents.market import answer, search, orders
+
+hits = search("mag prime")
+print(hits["results"][0]["slug"])
+
+book = orders("mag_prime_set")
+print(book["cheapest_sell_orders"])
+
+result = answer("What are the cheapest sell orders for mag prime set?")
+print(result["response"])
+```
+
+**Skills:** `answer`, `search`, `item_details`, `orders`, `get_portfolio`, `get_trades`, `buy`, `sell` (`answer` requires `OPENAI_API_KEY`).
 
 ## Layout
 
@@ -67,7 +95,9 @@ Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL` 
 agents/
   knowledge/       # Pinecone Q&A
   ranking/         # Overframe tier lookup
+  market/          # Live WFM orders + portfolio
   forecasting/     # Monte Carlo price forecasts + LLM Q&A
+  manager/         # FastAPI orchestrator (:8502)
 ```
 
 ## Tier data
@@ -76,7 +106,7 @@ Edit `data/tier_lists/overframe.json` or see [data/tier_lists/README.md](data/ti
 
 ## Future work
 
-See [docs/ARCHITECTURE_FUTURE.md](docs/ARCHITECTURE_FUTURE.md) for the planned manager router and market agent.
+See [docs/ARCHITECTURE_FUTURE.md](docs/ARCHITECTURE_FUTURE.md) for the manager router and [agents/manager/README.md](agents/manager/README.md) for running the backend + Streamlit UI.
 
 ## Notes
 

@@ -89,3 +89,32 @@ def parse_tier_filter(query: str) -> str | None:
         if g:
             return g.upper()
     return None
+
+
+_WFM_TAG_TO_EQUIPMENT: list[tuple[tuple[str, ...], str]] = [
+    (("warframe", "warframes"), "warframes"),
+    (("archwing",), "archwing"),
+    (("sentinel", "sentinels"), "sentinels"),
+    (("kavat", "kubrow", "pet", "pets", "companion"), "pets"),
+    (("rifle", "shotgun", "bow", "launcher", "primary", "assault", "sniper", "arch-gun", "archgun"), "primary"),
+    (("pistol", "secondary", "sidearm"), "secondary"),
+    (("melee", "sword", "dagger", "hammer", "whip", "polearm", "nunchaku", "arch-melee", "archmelee"), "melee"),
+]
+
+
+def equipment_class_from_wfm_tags(tags: list[str]) -> str:
+    """Map WFM v2 tags to Overframe equipment_class key."""
+    lowered = {t.lower().replace("-", " ") for t in tags}
+    for keys, equipment_class in _WFM_TAG_TO_EQUIPMENT:
+        for key in keys:
+            if key in lowered or any(key in tag for tag in lowered):
+                return equipment_class
+    return ""
+
+
+def lookup_tier_from_wfm(slug: str, tags: list[str]) -> str:
+    """Return Overframe tier for a WFM item slug using its tags."""
+    equipment_class = equipment_class_from_wfm_tags(tags)
+    if not equipment_class:
+        return ""
+    return lookup_tier(slug, equipment_class)

@@ -1,5 +1,6 @@
 .env
 .venv/
+.venv312/
 venv/
 __pycache__/
 *.py[cod]
@@ -11,4 +12,5 @@ data/cache/
 data/chroma/
 eval/
 agents/forecasting/charts/
+agents/market/trades.db
 charts/
