@@ -1,18 +1,18 @@
 # Manager orchestrator
 
-FastAPI server on `:8502` routes chat and REST calls to in-process subagents. The Streamlit UI ([`app.py`](../app.py)) is the frontend.
+FastAPI server on `:8602` routes chat and REST calls to in-process subagents. The Streamlit UI ([`app.py`](../app.py)) is the frontend.
 
 ## Run
 
 ```bash
 # Terminal 1 — Manager backend
-uvicorn agents.manager.api:app --host 0.0.0.0 --port 8502
+uvicorn agents.manager.api:app --host 0.0.0.0 --port 8602
 
 # Terminal 2 — Streamlit UI
-streamlit run app.py
+streamlit run app.py --server.port 8601
 ```
 
-Set `BACKEND_URL=http://localhost:8502` in `.env`.
+Set `BACKEND_URL=http://localhost:8602` and `AGENT_PUBLIC_URL=http://localhost:8602` in `.env`.
 
 ## Routing
 

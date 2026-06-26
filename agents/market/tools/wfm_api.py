@@ -18,7 +18,7 @@ _items_cache: list[dict] | None = None
 def _get_all_items() -> list[dict]:
     global _items_cache
     if _items_cache is None:
-        resp = requests.get(f"{BASE_V2}/items", headers=_HEADERS, timeout=15)
+        resp = requests.get(f"{BASE_V2}/items", headers=_HEADERS, timeout=45)
         resp.raise_for_status()
         _items_cache = [
             {"slug": i["slug"], "name": i["i18n"]["en"]["name"]}

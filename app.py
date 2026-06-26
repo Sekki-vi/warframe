@@ -2,19 +2,35 @@
 Warframe AI — Web UI
 Pure frontend. Talks to a backend agent via HTTP.
 Set BACKEND_URL to point at any compatible agent:
-  Manager Agent:  http://localhost:8502  (recommended)
+  Manager Agent:  http://localhost:8602  (recommended)
   Market Agent:   http://localhost:8000  (direct, bypasses Manager)
 """
 
 import os
+import re
 import requests
 import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8502")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8602")
 TIMEOUT     = 60
+
+_CHART_LINE = re.compile(r"\n\nForecast chart \([^)]+\): https?://\S+", re.I)
+
+
+def _display_response(text: str, plot_url: str | None) -> str:
+    if plot_url:
+        return _CHART_LINE.sub("", text).strip()
+    return text
+
+
+def render_forecast_chart(plot_url: str | None, label: str = "Forecast chart") -> None:
+    if not plot_url:
+        return
+    with st.expander(label, expanded=False):
+        st.image(plot_url, use_container_width=True)
 
 
 # ── HTTP helpers ──────────────────────────────────────────────────────────────
@@ -235,7 +251,9 @@ def render_chat() -> None:
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+            plot_url = msg.get("plot_url")
+            st.markdown(_display_response(msg["content"], plot_url))
+            render_forecast_chart(plot_url, msg.get("chart_label", "Forecast chart"))
             if msg.get("sources"):
                 render_source_cards(msg["sources"])
             if msg.get("agents_called"):
@@ -260,8 +278,11 @@ def render_chat() -> None:
                 agents_called = res.get("agents_called", [])
                 sources = res.get("sources", [])
                 flagged = res.get("guardrail_flagged", False)
+                plot_url = res.get("plot_url")
+                chart_label = res.get("chart_label", "Forecast chart")
 
-                st.markdown(response)
+                st.markdown(_display_response(response, plot_url))
+                render_forecast_chart(plot_url, chart_label)
                 if sources:
                     render_source_cards(sources)
                 if agents_called:
@@ -270,9 +291,12 @@ def render_chat() -> None:
                     st.caption("⚠️ Guardrail flagged")
 
                 st.session_state.messages.append({
-                    "role": "assistant", "content": response,
+                    "role": "assistant",
+                    "content": response,
                     "agents_called": agents_called,
                     "sources": sources,
+                    "plot_url": plot_url,
+                    "chart_label": chart_label if plot_url else None,
                 })
             else:
                 err = res.get("error", "Unknown error") if res else "No response"

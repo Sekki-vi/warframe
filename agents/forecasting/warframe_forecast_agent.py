@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
+import time
 from difflib import get_close_matches
 from functools import lru_cache
 from typing import Any
@@ -20,6 +22,8 @@ from .public_url import public_base_url
 
 API_V1_BASE = "https://api.warframe.market/v1"
 API_V2_BASE = "https://api.warframe.market/v2"
+API_TIMEOUT = int(os.getenv("WFM_API_TIMEOUT", "45"))
+API_RETRIES = int(os.getenv("WFM_API_RETRIES", "3"))
 PRICE_FIELDS = {"median", "avg_price", "wa_price", "closed_price", "moving_avg"}
 TIMEFRAMES = {"48hours", "90days"}
 
@@ -45,19 +49,28 @@ def _get_json(path: str, *, base_url: str = API_V1_BASE) -> dict[str, Any]:
         headers={
             "Accept": "application/json",
             "User-Agent": "warframe-forecast-agent/0.1",
+            "Platform": "pc",
+            "Language": "en",
         },
     )
-    try:
-        with urlopen(request, timeout=15) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except HTTPError as exc:
-        raise WarframeMarketError(
-            f"Warframe Market API returned HTTP {exc.code} for {url}"
-        ) from exc
-    except (URLError, TimeoutError) as exc:
-        raise WarframeMarketError(f"Could not reach Warframe Market API: {exc}") from exc
-    except json.JSONDecodeError as exc:
-        raise WarframeMarketError("Warframe Market API returned invalid JSON") from exc
+    last_exc: Exception | None = None
+    for attempt in range(API_RETRIES):
+        try:
+            with urlopen(request, timeout=API_TIMEOUT) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            raise WarframeMarketError(
+                f"Warframe Market API returned HTTP {exc.code} for {url}"
+            ) from exc
+        except (URLError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt + 1 < API_RETRIES:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+        except json.JSONDecodeError as exc:
+            raise WarframeMarketError("Warframe Market API returned invalid JSON") from exc
+
+    raise WarframeMarketError(f"Could not reach Warframe Market API: {last_exc}") from last_exc
 
 
 @lru_cache(maxsize=1)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-DEFAULT_BASE_URL = "http://127.0.0.1:8765"
+DEFAULT_BASE_URL = "http://127.0.0.1:8602"
 
 
 def public_base_url() -> str:

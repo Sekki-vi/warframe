@@ -60,13 +60,13 @@ print(answer["answer"])
 
 **Skills:** `forecast_item`, `compare_items`, `ask_market_question` (requires `OPENAI_API_KEY`).
 
-Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL=http://localhost:8502` when using the Manager (serves `/charts/`).
+Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL=http://localhost:8602` when using the Manager (serves `/charts/`).
 
 ### Manager + UI
 
 ```bash
-uvicorn agents.manager.api:app --host 0.0.0.0 --port 8502
-streamlit run app.py
+uvicorn agents.manager.api:app --host 0.0.0.0 --port 8602
+streamlit run app.py --server.port 8601
 ```
 
 ### Market
@@ -97,7 +97,7 @@ agents/
   ranking/         # Overframe tier lookup
   market/          # Live WFM orders + portfolio
   forecasting/     # Monte Carlo price forecasts + LLM Q&A
-  manager/         # FastAPI orchestrator (:8502)
+  manager/         # FastAPI orchestrator (:8602)
 ```
 
 ## Tier data

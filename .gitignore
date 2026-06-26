@@ -13,4 +13,5 @@ data/chroma/
 eval/
 agents/forecasting/charts/
 agents/market/trades.db
+*.db
 charts/

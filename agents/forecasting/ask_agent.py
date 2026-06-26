@@ -27,23 +27,93 @@ Rules:
 
 NARRATIVE_SYSTEM = """You are the narrative layer for a Warframe Market forecasting subagent.
 
-You receive:
-1) the user's original question
-2) structured forecast/compare results computed from real market statistics (not invented)
-
-Write a clear, human-friendly answer in plain English that:
-- Directly addresses the user's question
-- Cites specific numbers from the data (last price, median, mean, forecast mean, confidence intervals)
-- For buy/sell timing questions, give a cautious suggestion based on forecast direction, drift, and bands
-- Mention the chart URL if provided
-- Use short paragraphs and bullet points when helpful
-
-Constraints:
+Write a direct answer in 4-5 sentences maximum.
+- Answer only what the user asked; do not add extra context.
+- Include at most 2–3 key numbers (e.g. last price and forecast direction).
+- No bullet points, no disclaimers, no confidence-interval breakdown.
+- Do not include chart links — they are appended separately after your answer.
 - Ground every claim in the provided data. Do not invent prices or trends.
-- This is probabilistic market analysis, not guaranteed trading advice. Say that once, briefly.
-- Forecast steps are model time steps on downsampled history, not exact calendar hours unless the data window makes that clear.
-- If uncertainty is high (wide confidence bands), say so.
 """
+
+DETAILED_NARRATIVE_SYSTEM = """You are the narrative layer for a Warframe Market forecasting subagent.
+
+The user asked for more detail. Write a clear answer in plain English:
+- Address their question directly
+- Cite relevant numbers (last price, forecast mean, confidence bands if useful)
+- For buy/sell timing, give a cautious suggestion based on drift and bands
+- Keep it under one short paragraph or 3–4 bullet points max
+- Ground every claim in the provided data; do not invent prices
+- One brief disclaimer that this is probabilistic, not guaranteed advice
+"""
+
+
+def _wants_detail(question: str) -> bool:
+    lowered = question.lower()
+    cues = (
+        "more detail",
+        "more info",
+        "tell me more",
+        "explain",
+        "break down",
+        "break it down",
+        "full analysis",
+        "in depth",
+        "confidence interval",
+        "how confident",
+    )
+    return any(cue in lowered for cue in cues)
+
+
+def _brief_payload(result: dict[str, Any], plan: dict[str, Any], question: str) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "question": question,
+        "intent": plan.get("intent"),
+        "unit_label": result.get("unit_label"),
+    }
+    stats = result.get("stats") or {}
+    if result.get("item"):
+        payload["item"] = result["item"].get("item_name") if isinstance(result["item"], dict) else result["item"]
+        payload["last"] = stats.get("last")
+        payload["mean_end"] = stats.get("mean_end")
+        payload["drift"] = stats.get("drift")
+    if result.get("items"):
+        comparison = result.get("comparison") or {}
+        payload["items"] = [
+            entry.get("item", {}).get("item_name")
+            for entry in result["items"]
+            if isinstance(entry.get("item"), dict)
+        ]
+        cheapest = comparison.get("cheapest_last") or {}
+        highest = comparison.get("highest_last") or {}
+        if isinstance(cheapest.get("item"), dict):
+            payload["cheapest_last"] = {
+                "item": cheapest["item"].get("item_name"),
+                "price": cheapest.get("history_stats", {}).get("last"),
+            }
+        if isinstance(highest.get("item"), dict):
+            payload["highest_last"] = {
+                "item": highest["item"].get("item_name"),
+                "price": highest.get("history_stats", {}).get("last"),
+            }
+    return payload
+
+
+def item_names_from_result(result: dict[str, Any]) -> list[str]:
+    names: list[str] = []
+    item = result.get("item")
+    if isinstance(item, dict) and item.get("item_name"):
+        names.append(str(item["item_name"]))
+    elif item:
+        names.append(str(item))
+    for entry in result.get("items") or []:
+        if not isinstance(entry, dict):
+            continue
+        entry_item = entry.get("item")
+        if isinstance(entry_item, dict) and entry_item.get("item_name"):
+            name = str(entry_item["item_name"])
+            if name not in names:
+                names.append(name)
+    return names
 
 
 def _looks_like_question(text: str) -> bool:
@@ -91,22 +161,30 @@ def extract_plan(question: str) -> dict[str, Any]:
 
 
 def generate_answer(question: str, result: dict[str, Any], plan: dict[str, Any]) -> str:
-    compact = {
-        "question": question,
-        "intent": plan.get("intent"),
-        "skill": result.get("skill"),
-        "plot_url": result.get("plot_url"),
-        "unit_label": result.get("unit_label"),
-        "item": result.get("item"),
-        "market": result.get("market"),
-        "stats": result.get("stats"),
-        "items": result.get("items"),
-        "comparison": result.get("comparison"),
-    }
+    detail = _wants_detail(question)
+    if detail:
+        compact = {
+            "question": question,
+            "intent": plan.get("intent"),
+            "skill": result.get("skill"),
+            "plot_url": result.get("plot_url"),
+            "unit_label": result.get("unit_label"),
+            "item": result.get("item"),
+            "market": result.get("market"),
+            "stats": result.get("stats"),
+            "items": result.get("items"),
+            "comparison": result.get("comparison"),
+        }
+        system = DETAILED_NARRATIVE_SYSTEM
+    else:
+        compact = _brief_payload(result, plan, question)
+        system = NARRATIVE_SYSTEM
+
     user_payload = json.dumps(compact, indent=2)
     return chat_text(
-        NARRATIVE_SYSTEM,
+        system,
         f"User question:\n{question}\n\nStructured forecast data:\n{user_payload}",
+        temperature=0.2,
     )
 
 

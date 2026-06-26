@@ -2,11 +2,11 @@
 
 ## Manager + subagents
 
-The **Manager** ([`agents/manager/`](agents/manager/)) is a FastAPI server on port **8502**. It orchestrates four library subagents via in-process imports. The **Streamlit UI** ([`app.py`](app.py)) is the product frontend.
+The **Manager** ([`agents/manager/`](agents/manager/)) is a FastAPI server on port **8602**. It orchestrates four library subagents via in-process imports. The **Streamlit UI** ([`app.py`](app.py)) is the product frontend on port **8601**.
 
 ```mermaid
 flowchart TB
-  UI[app.py Streamlit] -->|HTTP :8502| Manager[Manager FastAPI]
+  UI[app.py Streamlit] -->|HTTP :8602| Manager[Manager FastAPI]
   Manager --> Market[Market agent]
   Manager --> Knowledge[Knowledge agent]
   Manager --> Forecasting[Forecasting agent]
@@ -24,7 +24,7 @@ flowchart TB
 ### Run locally
 
 ```bash
-uvicorn agents.manager.api:app --host 0.0.0.0 --port 8502
+uvicorn agents.manager.api:app --host 0.0.0.0 --port 8602
 streamlit run app.py
 ```
 

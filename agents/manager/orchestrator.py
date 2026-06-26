@@ -1,7 +1,9 @@
 """Main query orchestration pipeline."""
 from __future__ import annotations
 
-from agents.forecasting import ask_market_question
+import os
+
+from agents.forecasting.ask_agent import ask_market_question, item_names_from_result
 from agents.knowledge.agent import answer as knowledge_answer
 from agents.manager.guardrails import run_guardrails
 from agents.manager.responses import format_knowledge_reply, knowledge_sources
@@ -32,7 +34,8 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
     )
 
     if plan.agent == "forecasting":
-        result = ask_market_question(message)
+        chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
+        result = ask_market_question(message, base_url=chart_base)
         response = disclaimer + (result.get("answer") or "")
         agents_called = ["forecasting"]
 
@@ -59,6 +62,10 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         "agents_called": agents_called,
         "guardrail_flagged": guard.flagged,
     }
+    if plan.agent == "forecasting" and result.get("plot_url"):
+        out["plot_url"] = result["plot_url"]
+        names = item_names_from_result(result)
+        out["chart_label"] = f"Forecast chart — {', '.join(names)}" if names else "Forecast chart"
     if sources:
         out["sources"] = sources
     return out
