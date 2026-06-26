@@ -1,4 +1,0 @@
-# One item name per line. Lines starting with # are ignored.
-Mag Prime Set
-Rhino Prime Set
-Loki Prime Set

@@ -61,13 +61,6 @@ print(answer["answer"])
 
 Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL` if a manager will serve them over HTTP.
 
-### Walk-forward backtesting
-
-```bash
-python scripts/backtest.py "Mag Prime Set"
-python scripts/backtest.py --items-file backtest_items.example.txt --json-out report.json
-```
-
 ## Layout
 
 ```
@@ -75,8 +68,6 @@ agents/
   knowledge/       # Pinecone Q&A
   ranking/         # Overframe tier lookup
   forecasting/     # Monte Carlo price forecasts + LLM Q&A
-scripts/
-  backtest.py      # Forecast evaluation CLI
 ```
 
 ## Tier data
