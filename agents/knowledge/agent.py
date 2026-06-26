@@ -6,7 +6,6 @@ import random
 import re
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from html import unescape
 from typing import Any, Literal
 from urllib.parse import unquote
@@ -15,13 +14,11 @@ import requests
 from openai import OpenAI
 from pinecone import Pinecone
 
-from config import CACHE_DIR, ITEMS_CSV, KNOWLEDGE_INDEX_JSON, get_agent_config
+from config import CACHE_DIR, KNOWLEDGE_INDEX_JSON, get_agent_config
 from agents.knowledge.wfi_lookup import load_or_build_lookup, slugify
-from agents.knowledge.wfm_catalog import fetch_items_manifest
 
 IntentKind = Literal["random", "recommend", "lookup", "single"]
 SEMANTIC_MIN_SCORE = 0.35
-TRADABLE_SLUGS_JSON = CACHE_DIR / "tradable_slugs.json"
 EXCLUDED_EQUIPMENT = frozenset({"skins", "glyphs", "sigils", "node", "misc"})
 WIKI_API = "https://wiki.warframe.com/api.php"
 WIKI_BASE = "https://wiki.warframe.com/w/"
@@ -49,7 +46,6 @@ Rules:
 
 _client: OpenAI | None = None
 _cfg: dict | None = None
-_tradable_cache: set[str] | None = None
 _pinecone_index = None
 _openai_embed: OpenAI | None = None
 _semantic_cfg: dict | None = None
@@ -65,78 +61,6 @@ def load_alias_index() -> dict[str, Any]:
         )
     return json.loads(KNOWLEDGE_INDEX_JSON.read_text(encoding="utf-8"))
 
-
-
-
-TRADABLE_SLUGS_JSON = CACHE_DIR / "tradable_slugs.json"
-
-EXCLUDED_EQUIPMENT = frozenset({"skins", "glyphs", "sigils", "node", "misc"})
-
-
-def _load_csv_slugs() -> set[str]:
-    if not ITEMS_CSV.exists():
-        return set()
-    import csv
-
-    slugs: set[str] = set()
-    with ITEMS_CSV.open(encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            slug = (row.get("slug") or "").strip()
-            if slug:
-                slugs.add(slug)
-    return slugs
-
-
-def _load_api_tradable(wfm_by_slug: dict[str, dict[str, Any]]) -> set[str]:
-    slugs: set[str] = set()
-    for slug, item in wfm_by_slug.items():
-        if item.get("tradable") is True:
-            slugs.add(slug)
-    return slugs
-
-
-def build_tradable_registry(
-    wfm_by_slug: dict[str, dict[str, Any]] | None = None,
-    *,
-    force_wfm: bool = False,
-) -> dict[str, Any]:
-    """WFM manifest items where tradable is True (API-only for inclusion)."""
-    if wfm_by_slug is None:
-        wfm_by_slug = fetch_items_manifest(force=force_wfm)
-
-    csv_slugs = _load_csv_slugs()
-    api_slugs = _load_api_tradable(wfm_by_slug)
-    merged = api_slugs if api_slugs else csv_slugs
-
-    delta = sorted(api_slugs - csv_slugs)
-    registry = {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "csv_count": len(csv_slugs),
-        "api_count": len(api_slugs),
-        "merged_count": len(merged),
-        "delta_from_csv": delta[:50],
-        "delta_total": len(delta),
-        "slugs": sorted(merged),
-    }
-    TRADABLE_SLUGS_JSON.parent.mkdir(parents=True, exist_ok=True)
-    TRADABLE_SLUGS_JSON.write_text(json.dumps(registry, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(
-        f"Tradable registry: csv={len(csv_slugs)} api={len(api_slugs)} "
-        f"merged={len(merged)} new_since_csv={len(delta)}"
-    )
-    return registry
-
-
-def load_tradable_slugs(*, force_wfm: bool = False) -> set[str]:
-    if TRADABLE_SLUGS_JSON.exists() and not force_wfm:
-        data = json.loads(TRADABLE_SLUGS_JSON.read_text(encoding="utf-8"))
-        return set(data.get("slugs") or [])
-    return set(build_tradable_registry(force_wfm=force_wfm)["slugs"])
-
-
-
-WIKI_PAGE_BASE = "https://wiki.warframe.com/w/"
 
 # Generic names WFI stores on component/blueprint docs
 _GENERIC_COMPONENT_NAMES: frozenset[str] = frozenset(
@@ -660,8 +584,6 @@ def _stat_score(doc: dict[str, Any]) -> float:
     m = _STAT_CRIT.search(text)
     if m:
         score += float(m.group(1))
-    if doc.get("tradable"):
-        score += 5.0
     return score
 
 
@@ -1112,13 +1034,6 @@ def _get_client() -> tuple[dict, OpenAI]:
     return _cfg, _client
 
 
-def _tradable_slugs() -> set[str]:
-    global _tradable_cache
-    if _tradable_cache is None:
-        _tradable_cache = load_tradable_slugs()
-    return _tradable_cache
-
-
 def _trim_history(history: list[dict[str, str]], max_turns: int) -> list[dict[str, str]]:
     if len(history) <= max_turns * 2:
         return history
@@ -1146,42 +1061,6 @@ def _is_price_query(query: str) -> bool:
             q,
         )
     )
-
-
-def _resolve_query_slug(query: str) -> tuple[str, str]:
-    index = load_alias_index()
-    candidates = [query.strip(), query.strip().lower()]
-    for cand in candidates:
-        if not cand:
-            continue
-        doc_id = (
-            index["name_to_doc"].get(cand)
-            or index["slug_to_doc"].get(slugify(cand))
-            or index["alias_to_doc"].get(slugify(cand))
-        )
-        if doc_id:
-            doc = index["docs_by_id"].get(doc_id) or {}
-            return doc_id, doc.get("name") or doc_id.replace("_", " ").title()
-    lookup = load_or_build_lookup()
-    key = slugify(query)
-    wfi = lookup["by_slug"].get(key)
-    if wfi:
-        return key, wfi.get("name") or key.replace("_", " ").title()
-    return "", ""
-
-
-def _tradable_guard(slug: str, wfi_name: str = "") -> str | None:
-    if not slug:
-        return None
-    tradable = _tradable_slugs()
-    if slug in tradable or f"{slug}_set" in tradable:
-        label = wfi_name or slug.replace("_", " ").title()
-        return (
-            f"Operator, {label} is a tradable market item. "
-            "This knowledge interface covers non-tradable items only; "
-            "market pricing will be handled by a separate subsystem."
-        )
-    return None
 
 
 def retrieve(query: str) -> tuple[list[dict[str, Any]], QueryIntent]:
@@ -1220,22 +1099,11 @@ def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[st
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": reply})
         return {"reply": reply, "sources": [], "history": history}
-    pre_slug, pre_name = _resolve_query_slug(message)
-    guard = _tradable_guard(pre_slug, pre_name)
-    if guard and pre_slug and pre_slug not in load_alias_index()["docs_by_id"]:
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": guard})
-        return {"reply": guard, "sources": [], "history": history, "resolved_slug": pre_slug, "equipment_class": ""}
     hits, _intent = retrieve(message)
     if hits:
         hits = [enrich_hit_drops(hits[0])]
-    resolved_slug = hits[0].get("slug") or hits[0].get("doc_id") if hits else pre_slug
+    resolved_slug = hits[0].get("slug") or hits[0].get("doc_id") if hits else ""
     equipment_class = hits[0].get("equipment_class") if hits else ""
-    guard = _tradable_guard(resolved_slug, hits[0].get("name") if hits else pre_name)
-    if guard:
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": guard})
-        return {"reply": guard, "sources": [], "history": history, "resolved_slug": resolved_slug, "equipment_class": equipment_class}
     context = _build_context(hits)
     messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(_trim_history(history, cfg["max_history"]))

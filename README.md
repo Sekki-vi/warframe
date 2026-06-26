@@ -16,7 +16,7 @@ Knowledge does **not** embed tier data. Ranking is a separate JSON lookup the ma
 3. Ensure local runtime data exists (not in git):
    - `data/processed/knowledge_index.json` (required)
    - `data/processed/knowledge_corpus.jsonl` (optional archive)
-   - `data/cache/` (tradable slugs, wfi lookup, etc.)
+   - `data/cache/` (wfi lookup, wiki drops cache, etc.)
 4. Pinecone index `warframe`, namespace `warframe` must already be populated
 
 ### Pinecone

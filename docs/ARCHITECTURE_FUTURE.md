@@ -2,7 +2,7 @@
 
 Phase 1 ships two library agents:
 
-- **Knowledge** — non-tradable WFI corpus via Pinecone + alias index
+- **Knowledge** — non-tradable WFI corpus via Pinecone + alias index (no warframe.market dependency)
 - **Ranking** — Overframe tier lookup from `data/tier_lists/overframe.json`
 
 ## Future manager router
