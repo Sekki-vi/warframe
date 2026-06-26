@@ -1,25 +1,51 @@
-# Warframe Market Forecast Agent
+# Warframe Agents
 
-Python subagent that forecasts and compares Warframe Market item prices from completed-trade statistics. Includes optional OpenAI-powered natural-language Q&A.
+Library agents for a future Ordis-style manager:
+
+| Agent | Source | Purpose |
+|-------|--------|---------|
+| Knowledge | Pinecone + local alias index | Non-tradable item descriptions, stats, drops |
+| Ranking | `data/tier_lists/overframe.json` | Overframe tier lookup (S–D) |
+| Forecasting | Warframe Market statistics | Price forecasts, item comparison, LLM Q&A |
+
+Knowledge does **not** embed tier data. Ranking is a separate JSON lookup the manager will call later.
 
 ## Setup
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS/Linux
+1. `pip install -r requirements.txt`
+2. Copy `.env.example` → `.env` and fill in API keys
+3. Processed knowledge data is in git under `data/processed/` (index + corpus). Build or refresh `data/cache/` locally (wfi lookup, wiki drops, etc.; not in git).
+4. Pinecone index `warframe`, namespace `warframe` must already be populated
 
-pip install -r requirements.txt
-copy .env.example .env        # set OPENAI_API_KEY for ask/LLM features
+### Pinecone
+
+- Index: `warframe` (1536-dim, cosine)
+- Namespace: `warframe`
+
+## Usage
+
+### Knowledge + ranking
+
+```python
+from agents.knowledge.agent import answer, retrieve
+from agents.ranking.agent import lookup_tier, enrich_response
+
+hits, intent = retrieve("Excalibur")
+print(hits[0]["name"])
+
+result = answer("Tell me about Excalibur")
+print(result["reply"])
+
+print(lookup_tier("wisp", "warframes"))
 ```
 
-## Python API
+### Forecasting
 
 ```python
 from dotenv import load_dotenv
 load_dotenv()
 
-from agent.forecasting import forecast_item, compare_items, ask_market_question
+from agents.forecasting import forecast_item, compare_items, ask_market_question
 
 result = forecast_item("Mag Prime Set")
 print(result["stats"]["mean_end"], result["plot_url"])
@@ -31,17 +57,11 @@ answer = ask_market_question("What is the median price trend for Mag Prime Set?"
 print(answer["answer"])
 ```
 
-## Skills
+**Skills:** `forecast_item`, `compare_items`, `ask_market_question` (requires `OPENAI_API_KEY`).
 
-| Skill | Module | Description |
-|-------|--------|-------------|
-| `forecast_item` | `agent.forecasting.warframe_forecast_agent` | Forecast one item |
-| `compare_items` | `agent.forecasting.warframe_forecast_agent` | Compare two or more items |
-| `ask_market_question` | `agent.forecasting.ask_agent` | Natural-language Q&A (requires `OPENAI_API_KEY`) |
+Chart PNGs are saved under `agents/forecasting/charts/`. Set `AGENT_PUBLIC_URL` if a manager will serve them over HTTP.
 
-Chart PNGs are saved under `agent/forecasting/charts/`. Set `AGENT_PUBLIC_URL` if a manager will serve them over HTTP.
-
-## Walk-forward backtesting
+### Walk-forward backtesting
 
 ```bash
 python scripts/backtest.py "Mag Prime Set"
@@ -51,19 +71,22 @@ python scripts/backtest.py --items-file backtest_items.example.txt --json-out re
 ## Layout
 
 ```
-agent/
-  forecasting/
-    warframe_forecast_agent.py   # forecast + compare
-    ask_agent.py                 # LLM Q&A
-    forecast_core.py             # Monte Carlo + plots
-    backtest.py                  # walk-forward evaluation
-    chart_store.py               # PNG storage
-    llm_client.py                # OpenAI helpers
+agents/
+  knowledge/       # Pinecone Q&A
+  ranking/         # Overframe tier lookup
+  forecasting/     # Monte Carlo price forecasts + LLM Q&A
 scripts/
-  backtest.py                    # CLI entry point
+  backtest.py      # Forecast evaluation CLI
 ```
+
+## Tier data
+
+Edit `data/tier_lists/overframe.json` or see [data/tier_lists/README.md](data/tier_lists/README.md).
+
+## Future work
+
+See [docs/ARCHITECTURE_FUTURE.md](docs/ARCHITECTURE_FUTURE.md) for the planned manager router and market agent.
 
 ## Notes
 
 - Forecasts are probabilistic estimates based on recent market history, not trading advice.
-- REST API and A2A interfaces are not included in this package; add them when wiring a manager.

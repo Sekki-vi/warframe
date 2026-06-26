@@ -1,0 +1,1541 @@
+{
+  "updated_at": "2026-06-26T13:52:44.763776+00:00",
+  "categories": {
+    "warframes": {
+      "wisp": {
+        "tier": "S",
+        "name": "Wisp"
+      },
+      "saryn": {
+        "tier": "S",
+        "name": "Saryn"
+      },
+      "dante": {
+        "tier": "S",
+        "name": "Dante"
+      },
+      "uriel": {
+        "tier": "S",
+        "name": "Uriel"
+      },
+      "octavia": {
+        "tier": "S",
+        "name": "Octavia"
+      },
+      "mesa": {
+        "tier": "S",
+        "name": "Mesa"
+      },
+      "nokko": {
+        "tier": "S",
+        "name": "Nokko"
+      },
+      "oraxia": {
+        "tier": "A",
+        "name": "Oraxia"
+      },
+      "sirius_orion": {
+        "tier": "A",
+        "name": "Sirius & Orion"
+      },
+      "revenant": {
+        "tier": "A",
+        "name": "Revenant"
+      },
+      "khora": {
+        "tier": "A",
+        "name": "Khora"
+      },
+      "kullervo": {
+        "tier": "A",
+        "name": "Kullervo"
+      },
+      "voidrig": {
+        "tier": "A",
+        "name": "Voidrig"
+      },
+      "gauss": {
+        "tier": "A",
+        "name": "Gauss"
+      },
+      "volt": {
+        "tier": "A",
+        "name": "Volt"
+      },
+      "protea": {
+        "tier": "A",
+        "name": "Protea"
+      },
+      "mirage": {
+        "tier": "A",
+        "name": "Mirage"
+      },
+      "nova": {
+        "tier": "A",
+        "name": "Nova"
+      },
+      "xaku": {
+        "tier": "A",
+        "name": "Xaku"
+      },
+      "citrine": {
+        "tier": "A",
+        "name": "Citrine"
+      },
+      "follie": {
+        "tier": "A",
+        "name": "Follie"
+      },
+      "jade": {
+        "tier": "A",
+        "name": "Jade"
+      },
+      "wukong": {
+        "tier": "A",
+        "name": "Wukong"
+      },
+      "titania": {
+        "tier": "A",
+        "name": "Titania"
+      },
+      "cyte_09": {
+        "tier": "A",
+        "name": "Cyte-09"
+      },
+      "baruuk": {
+        "tier": "A",
+        "name": "Baruuk"
+      },
+      "nidus": {
+        "tier": "A",
+        "name": "Nidus"
+      },
+      "rhino": {
+        "tier": "A",
+        "name": "Rhino"
+      },
+      "gara": {
+        "tier": "A",
+        "name": "Gara"
+      },
+      "harrow": {
+        "tier": "A",
+        "name": "Harrow"
+      },
+      "nezha": {
+        "tier": "A",
+        "name": "Nezha"
+      },
+      "voruna": {
+        "tier": "A",
+        "name": "Voruna"
+      },
+      "nekros": {
+        "tier": "A",
+        "name": "Nekros"
+      },
+      "sevagoth": {
+        "tier": "A",
+        "name": "Sevagoth"
+      },
+      "dagath": {
+        "tier": "A",
+        "name": "Dagath"
+      },
+      "styanax": {
+        "tier": "A",
+        "name": "Styanax"
+      },
+      "gyre": {
+        "tier": "A",
+        "name": "Gyre"
+      },
+      "mag": {
+        "tier": "A",
+        "name": "Mag"
+      },
+      "temple": {
+        "tier": "A",
+        "name": "Temple"
+      },
+      "garuda": {
+        "tier": "A",
+        "name": "Garuda"
+      },
+      "hildryn": {
+        "tier": "A",
+        "name": "Hildryn"
+      },
+      "trinity": {
+        "tier": "A",
+        "name": "Trinity"
+      },
+      "lavos": {
+        "tier": "A",
+        "name": "Lavos"
+      },
+      "ember": {
+        "tier": "A",
+        "name": "Ember"
+      },
+      "vauban": {
+        "tier": "A",
+        "name": "Vauban"
+      },
+      "equinox": {
+        "tier": "B",
+        "name": "Equinox"
+      },
+      "ash": {
+        "tier": "B",
+        "name": "Ash"
+      },
+      "ivara": {
+        "tier": "B",
+        "name": "Ivara"
+      },
+      "excalibur": {
+        "tier": "B",
+        "name": "Excalibur"
+      },
+      "valkyr": {
+        "tier": "B",
+        "name": "Valkyr"
+      },
+      "koumei": {
+        "tier": "B",
+        "name": "Koumei"
+      },
+      "zephyr": {
+        "tier": "B",
+        "name": "Zephyr"
+      },
+      "chroma": {
+        "tier": "B",
+        "name": "Chroma"
+      },
+      "frost": {
+        "tier": "B",
+        "name": "Frost"
+      },
+      "qorvex": {
+        "tier": "B",
+        "name": "Qorvex"
+      },
+      "oberon": {
+        "tier": "B",
+        "name": "Oberon"
+      },
+      "caliban": {
+        "tier": "B",
+        "name": "Caliban"
+      },
+      "hydroid": {
+        "tier": "B",
+        "name": "Hydroid"
+      },
+      "inaros": {
+        "tier": "B",
+        "name": "Inaros"
+      },
+      "grendel": {
+        "tier": "B",
+        "name": "Grendel"
+      },
+      "limbo": {
+        "tier": "B",
+        "name": "Limbo"
+      },
+      "atlas": {
+        "tier": "B",
+        "name": "Atlas"
+      },
+      "banshee": {
+        "tier": "B",
+        "name": "Banshee"
+      },
+      "yareli": {
+        "tier": "B",
+        "name": "Yareli"
+      },
+      "loki": {
+        "tier": "B",
+        "name": "Loki"
+      },
+      "nyx": {
+        "tier": "B",
+        "name": "Nyx"
+      },
+      "bonewidow": {
+        "tier": "C",
+        "name": "Bonewidow"
+      }
+    },
+    "primary": {
+      "cedo_prime": {
+        "tier": "S",
+        "name": "Cedo Prime"
+      },
+      "phenmor": {
+        "tier": "S",
+        "name": "Phenmor"
+      },
+      "nataruk": {
+        "tier": "S",
+        "name": "Nataruk"
+      },
+      "coda_bubonico": {
+        "tier": "S",
+        "name": "Coda Bubonico"
+      },
+      "coda_bassocyst": {
+        "tier": "S",
+        "name": "Coda Bassocyst"
+      },
+      "torid": {
+        "tier": "S",
+        "name": "Torid"
+      },
+      "felarx": {
+        "tier": "S",
+        "name": "Felarx"
+      },
+      "acceltra_prime": {
+        "tier": "S",
+        "name": "Acceltra Prime"
+      },
+      "cedo": {
+        "tier": "S",
+        "name": "Cedo"
+      },
+      "rubico_prime": {
+        "tier": "S",
+        "name": "Rubico Prime"
+      },
+      "phantasma_prime": {
+        "tier": "S",
+        "name": "Phantasma Prime"
+      },
+      "proboscis": {
+        "tier": "S",
+        "name": "Proboscis"
+      },
+      "trumna_prime": {
+        "tier": "S",
+        "name": "Trumna Prime"
+      },
+      "kuva_bramma": {
+        "tier": "S",
+        "name": "Kuva Bramma"
+      },
+      "bubonico": {
+        "tier": "S",
+        "name": "Bubonico"
+      },
+      "cernos": {
+        "tier": "S",
+        "name": "Cernos"
+      },
+      "kuva_zarr": {
+        "tier": "S",
+        "name": "Kuva Zarr"
+      },
+      "strun_prime": {
+        "tier": "S",
+        "name": "Strun Prime"
+      },
+      "tenet_glaxion": {
+        "tier": "A",
+        "name": "Tenet Glaxion"
+      },
+      "ignis_wraith": {
+        "tier": "A",
+        "name": "Ignis Wraith"
+      },
+      "acceltra": {
+        "tier": "A",
+        "name": "Acceltra"
+      },
+      "trumna": {
+        "tier": "A",
+        "name": "Trumna"
+      },
+      "fulmin_prime": {
+        "tier": "A",
+        "name": "Fulmin Prime"
+      },
+      "latron_prime": {
+        "tier": "A",
+        "name": "Latron Prime"
+      },
+      "tenet_envoy": {
+        "tier": "A",
+        "name": "Tenet Envoy"
+      },
+      "perigale_prime": {
+        "tier": "A",
+        "name": "Perigale Prime"
+      },
+      "afentis_prime": {
+        "tier": "A",
+        "name": "Afentis Prime"
+      },
+      "vinquibus": {
+        "tier": "A",
+        "name": "Vinquibus"
+      },
+      "coda_sporothrix": {
+        "tier": "A",
+        "name": "Coda Sporothrix"
+      },
+      "kuva_sobek": {
+        "tier": "A",
+        "name": "Kuva Sobek"
+      },
+      "kuva_chakkhurr": {
+        "tier": "A",
+        "name": "Kuva Chakkhurr"
+      },
+      "kuva_ogris": {
+        "tier": "A",
+        "name": "Kuva Ogris"
+      },
+      "kuva_kohm": {
+        "tier": "A",
+        "name": "Kuva Kohm"
+      },
+      "vadarya_prime": {
+        "tier": "A",
+        "name": "Vadarya Prime"
+      },
+      "corinth_prime": {
+        "tier": "A",
+        "name": "Corinth Prime"
+      },
+      "burston_prime": {
+        "tier": "A",
+        "name": "Burston Prime"
+      },
+      "ax_52": {
+        "tier": "A",
+        "name": "Ax-52"
+      },
+      "stahlta": {
+        "tier": "A",
+        "name": "Stahlta"
+      },
+      "enkaus": {
+        "tier": "A",
+        "name": "Enkaus"
+      },
+      "kuva_hek": {
+        "tier": "A",
+        "name": "Kuva Hek"
+      },
+      "fulmin": {
+        "tier": "A",
+        "name": "Fulmin"
+      },
+      "vectis_prime": {
+        "tier": "A",
+        "name": "Vectis Prime"
+      },
+      "gotva_prime": {
+        "tier": "A",
+        "name": "Gotva Prime"
+      },
+      "daikyu_prime": {
+        "tier": "A",
+        "name": "Daikyu Prime"
+      },
+      "boar_prime": {
+        "tier": "A",
+        "name": "Boar Prime"
+      },
+      "phantasma": {
+        "tier": "A",
+        "name": "Phantasma"
+      },
+      "coda_synapse": {
+        "tier": "A",
+        "name": "Coda Synapse"
+      },
+      "shedu": {
+        "tier": "A",
+        "name": "Shedu"
+      },
+      "kuva_tonkor": {
+        "tier": "A",
+        "name": "Kuva Tonkor"
+      },
+      "amprex": {
+        "tier": "A",
+        "name": "Amprex"
+      },
+      "soma_prime": {
+        "tier": "A",
+        "name": "Soma Prime"
+      },
+      "reconifex": {
+        "tier": "A",
+        "name": "Reconifex"
+      },
+      "astilla_prime": {
+        "tier": "A",
+        "name": "Astilla Prime"
+      },
+      "tenet_flux_rifle": {
+        "tier": "A",
+        "name": "Tenet Flux Rifle"
+      },
+      "tenet_tetra": {
+        "tier": "A",
+        "name": "Tenet Tetra"
+      },
+      "boltor_prime": {
+        "tier": "A",
+        "name": "Boltor Prime"
+      },
+      "tenora_prime": {
+        "tier": "A",
+        "name": "Tenora Prime"
+      },
+      "cinta": {
+        "tier": "A",
+        "name": "Cinta"
+      },
+      "coda_hema": {
+        "tier": "A",
+        "name": "Coda Hema"
+      },
+      "baza_prime": {
+        "tier": "A",
+        "name": "Baza Prime"
+      },
+      "opticor_vandal": {
+        "tier": "A",
+        "name": "Opticor Vandal"
+      },
+      "scourge_prime": {
+        "tier": "A",
+        "name": "Scourge Prime"
+      },
+      "prisma_lenz": {
+        "tier": "A",
+        "name": "Prisma Lenz"
+      },
+      "aeolak": {
+        "tier": "A",
+        "name": "Aeolak"
+      },
+      "evensong": {
+        "tier": "A",
+        "name": "Evensong"
+      },
+      "tigris_prime": {
+        "tier": "A",
+        "name": "Tigris Prime"
+      },
+      "zenith": {
+        "tier": "A",
+        "name": "Zenith"
+      },
+      "tiberon_prime": {
+        "tier": "A",
+        "name": "Tiberon Prime"
+      },
+      "dread": {
+        "tier": "A",
+        "name": "Dread"
+      },
+      "arca_plasmor": {
+        "tier": "A",
+        "name": "Arca Plasmor"
+      },
+      "vaykor_hek": {
+        "tier": "A",
+        "name": "Vaykor Hek"
+      },
+      "kuva_quartakk": {
+        "tier": "A",
+        "name": "Kuva Quartakk"
+      },
+      "tenet_ferrox": {
+        "tier": "A",
+        "name": "Tenet Ferrox"
+      },
+      "efv_5_jupiter": {
+        "tier": "A",
+        "name": "Efv-5 Jupiter"
+      },
+      "exergis": {
+        "tier": "A",
+        "name": "Exergis"
+      },
+      "sybaris_prime": {
+        "tier": "A",
+        "name": "Sybaris Prime"
+      }
+    },
+    "secondary": {
+      "laetum": {
+        "tier": "S",
+        "name": "Laetum"
+      },
+      "kuva_nukor": {
+        "tier": "S",
+        "name": "Kuva Nukor"
+      },
+      "epitaph_prime": {
+        "tier": "S",
+        "name": "Epitaph Prime"
+      },
+      "tenet_cycron": {
+        "tier": "S",
+        "name": "Tenet Cycron"
+      },
+      "kompressa_prime": {
+        "tier": "S",
+        "name": "Kompressa Prime"
+      },
+      "epitaph": {
+        "tier": "S",
+        "name": "Epitaph"
+      },
+      "dual_coda": {
+        "tier": "S",
+        "name": "DUAL CODA"
+      },
+      "sporelacer": {
+        "tier": "S",
+        "name": "Sporelacer"
+      },
+      "torxica": {
+        "tier": "S",
+        "name": "TORXICA"
+      },
+      "dual_toxocyst": {
+        "tier": "S",
+        "name": "Dual Toxocyst"
+      },
+      "akarius_prime": {
+        "tier": "S",
+        "name": "Akarius Prime"
+      },
+      "ocucor": {
+        "tier": "S",
+        "name": "Ocucor"
+      },
+      "pyrana_prime": {
+        "tier": "S",
+        "name": "Pyrana Prime"
+      },
+      "scyotid": {
+        "tier": "S",
+        "name": "Scyotid"
+      },
+      "athodai_prime": {
+        "tier": "A",
+        "name": "Athodai Prime"
+      },
+      "tenet_plinx": {
+        "tier": "A",
+        "name": "Tenet Plinx"
+      },
+      "grimoire": {
+        "tier": "A",
+        "name": "Grimoire"
+      },
+      "knell_prime": {
+        "tier": "A",
+        "name": "Knell Prime"
+      },
+      "kuva_brakk": {
+        "tier": "A",
+        "name": "Kuva Brakk"
+      },
+      "catchmoon": {
+        "tier": "A",
+        "name": "Catchmoon"
+      },
+      "tombfinger": {
+        "tier": "A",
+        "name": "Tombfinger"
+      },
+      "coda_catabolyst": {
+        "tier": "A",
+        "name": "Coda Catabolyst"
+      },
+      "aksomati_prime": {
+        "tier": "A",
+        "name": "Aksomati Prime"
+      },
+      "vermisplicer": {
+        "tier": "A",
+        "name": "Vermisplicer"
+      },
+      "kompressa": {
+        "tier": "A",
+        "name": "Kompressa"
+      },
+      "lex_prime": {
+        "tier": "A",
+        "name": "Lex Prime"
+      },
+      "gaze": {
+        "tier": "A",
+        "name": "Gaze"
+      },
+      "catabolyst": {
+        "tier": "A",
+        "name": "Catabolyst"
+      },
+      "atomos": {
+        "tier": "A",
+        "name": "Atomos"
+      },
+      "tenet_diplos": {
+        "tier": "A",
+        "name": "Tenet Diplos"
+      },
+      "akjagara_prime": {
+        "tier": "A",
+        "name": "Akjagara Prime"
+      },
+      "tenet_detron": {
+        "tier": "A",
+        "name": "Tenet Detron"
+      },
+      "kuva_twin": {
+        "tier": "A",
+        "name": "KUVA TWIN"
+      },
+      "hystrix_prime": {
+        "tier": "A",
+        "name": "Hystrix Prime"
+      },
+      "rattleguts": {
+        "tier": "A",
+        "name": "Rattleguts"
+      },
+      "athodai": {
+        "tier": "A",
+        "name": "Athodai"
+      },
+      "akstiletto_prime": {
+        "tier": "A",
+        "name": "Akstiletto Prime"
+      },
+      "sepulcrum": {
+        "tier": "A",
+        "name": "Sepulcrum"
+      },
+      "stubbas": {
+        "tier": "A",
+        "name": "STUBBAS"
+      },
+      "vesper_77": {
+        "tier": "A",
+        "name": "Vesper 77"
+      },
+      "euphona_prime": {
+        "tier": "A",
+        "name": "Euphona Prime"
+      },
+      "onos": {
+        "tier": "A",
+        "name": "Onos"
+      },
+      "tenet_spirex": {
+        "tier": "A",
+        "name": "Tenet Spirex"
+      },
+      "zakti_prime": {
+        "tier": "A",
+        "name": "Zakti Prime"
+      },
+      "akarius": {
+        "tier": "A",
+        "name": "Akarius"
+      },
+      "sicarus_prime": {
+        "tier": "A",
+        "name": "Sicarus Prime"
+      },
+      "zylok_prime": {
+        "tier": "A",
+        "name": "Zylok Prime"
+      },
+      "velox_prime": {
+        "tier": "A",
+        "name": "Velox Prime"
+      },
+      "twin_grakatas": {
+        "tier": "A",
+        "name": "Twin Grakatas"
+      },
+      "staticor": {
+        "tier": "A",
+        "name": "Staticor"
+      },
+      "pandero_prime": {
+        "tier": "A",
+        "name": "Pandero Prime"
+      },
+      "synoid": {
+        "tier": "A",
+        "name": "SYNOID"
+      },
+      "gammacor": {
+        "tier": "A",
+        "name": "Gammacor"
+      },
+      "sagek_prime": {
+        "tier": "A",
+        "name": "Sagek Prime"
+      },
+      "cantare": {
+        "tier": "A",
+        "name": "Cantare"
+      },
+      "zymos": {
+        "tier": "A",
+        "name": "Zymos"
+      },
+      "akmagnus_prime": {
+        "tier": "A",
+        "name": "Akmagnus Prime"
+      },
+      "riot_848": {
+        "tier": "A",
+        "name": "Riot-848"
+      },
+      "prisma": {
+        "tier": "A",
+        "name": "PRISMA"
+      },
+      "angstrum": {
+        "tier": "A",
+        "name": "Angstrum"
+      },
+      "aegrit": {
+        "tier": "A",
+        "name": "Aegrit"
+      },
+      "mara_detron": {
+        "tier": "A",
+        "name": "Mara Detron"
+      },
+      "cyanex": {
+        "tier": "A",
+        "name": "Cyanex"
+      },
+      "magnus_prime": {
+        "tier": "A",
+        "name": "Magnus Prime"
+      },
+      "lato_vandal": {
+        "tier": "A",
+        "name": "Lato Vandal"
+      },
+      "prisma_twin": {
+        "tier": "A",
+        "name": "PRISMA TWIN"
+      },
+      "akvasto_prime": {
+        "tier": "A",
+        "name": "Akvasto Prime"
+      },
+      "gremlins": {
+        "tier": "A",
+        "name": "GREMLINS"
+      }
+    },
+    "melee": {
+      "okina_prime": {
+        "tier": "S",
+        "name": "Okina Prime"
+      },
+      "praedos": {
+        "tier": "S",
+        "name": "Praedos"
+      },
+      "nikana_prime": {
+        "tier": "S",
+        "name": "Nikana Prime"
+      },
+      "kronen_prime": {
+        "tier": "S",
+        "name": "Kronen Prime"
+      },
+      "glaive_prime": {
+        "tier": "S",
+        "name": "Glaive Prime"
+      },
+      "harmony": {
+        "tier": "S",
+        "name": "Harmony"
+      },
+      "guandao_prime": {
+        "tier": "S",
+        "name": "Guandao Prime"
+      },
+      "coda_pathocyst": {
+        "tier": "S",
+        "name": "Coda Pathocyst"
+      },
+      "syam": {
+        "tier": "S",
+        "name": "Syam"
+      },
+      "dual_keres_prime": {
+        "tier": "S",
+        "name": "Dual Keres Prime"
+      },
+      "wrath": {
+        "tier": "S",
+        "name": "Wrath"
+      },
+      "stropha": {
+        "tier": "S",
+        "name": "Stropha"
+      },
+      "thalys": {
+        "tier": "S",
+        "name": "Thalys"
+      },
+      "reaper_prime": {
+        "tier": "S",
+        "name": "Reaper Prime"
+      },
+      "venka_prime": {
+        "tier": "S",
+        "name": "Venka Prime"
+      },
+      "sepfahn": {
+        "tier": "S",
+        "name": "Sepfahn"
+      },
+      "redeemer_prime": {
+        "tier": "S",
+        "name": "Redeemer Prime"
+      },
+      "war_prime": {
+        "tier": "S",
+        "name": "War Prime"
+      },
+      "dual_viciss": {
+        "tier": "S",
+        "name": "Dual Viciss"
+      },
+      "innodem": {
+        "tier": "S",
+        "name": "Innodem"
+      },
+      "gram_prime": {
+        "tier": "S",
+        "name": "Gram Prime"
+      },
+      "plague_kripath": {
+        "tier": "S",
+        "name": "Plague Kripath"
+      },
+      "azothane": {
+        "tier": "S",
+        "name": "Azothane"
+      },
+      "orthos_prime": {
+        "tier": "S",
+        "name": "Orthos Prime"
+      },
+      "quassus_prime": {
+        "tier": "A",
+        "name": "Quassus Prime"
+      },
+      "dual_ichor": {
+        "tier": "A",
+        "name": "Dual Ichor"
+      },
+      "lesion": {
+        "tier": "A",
+        "name": "Lesion"
+      },
+      "nami_skyla_prime": {
+        "tier": "A",
+        "name": "Nami Skyla Prime"
+      },
+      "paracesis": {
+        "tier": "A",
+        "name": "Paracesis"
+      },
+      "venato_prime": {
+        "tier": "A",
+        "name": "Venato Prime"
+      },
+      "coda_motovore": {
+        "tier": "A",
+        "name": "Coda Motovore"
+      },
+      "gunsen_prime": {
+        "tier": "A",
+        "name": "Gunsen Prime"
+      },
+      "hate": {
+        "tier": "A",
+        "name": "Hate"
+      },
+      "edun": {
+        "tier": "A",
+        "name": "Edun"
+      },
+      "dokrahm": {
+        "tier": "A",
+        "name": "Dokrahm"
+      },
+      "tenet_grigori": {
+        "tier": "A",
+        "name": "Tenet Grigori"
+      },
+      "spinnerex": {
+        "tier": "A",
+        "name": "Spinnerex"
+      },
+      "tatsu_prime": {
+        "tier": "A",
+        "name": "Tatsu Prime"
+      },
+      "coda_hirudo": {
+        "tier": "A",
+        "name": "Coda Hirudo"
+      },
+      "coda_caustacyst": {
+        "tier": "A",
+        "name": "Coda Caustacyst"
+      },
+      "sarofang_prime": {
+        "tier": "A",
+        "name": "Sarofang Prime"
+      },
+      "tenet_livia": {
+        "tier": "A",
+        "name": "Tenet Livia"
+      },
+      "pride": {
+        "tier": "A",
+        "name": "Pride"
+      },
+      "coda_mire": {
+        "tier": "A",
+        "name": "Coda Mire"
+      },
+      "corufell": {
+        "tier": "A",
+        "name": "Corufell"
+      },
+      "broken_war": {
+        "tier": "A",
+        "name": "Broken War"
+      },
+      "pangolin_prime": {
+        "tier": "A",
+        "name": "Pangolin Prime"
+      },
+      "prisma_ohma": {
+        "tier": "A",
+        "name": "Prisma Ohma"
+      },
+      "nepheri": {
+        "tier": "A",
+        "name": "Nepheri"
+      },
+      "vitrica": {
+        "tier": "A",
+        "name": "Vitrica"
+      },
+      "pennant": {
+        "tier": "A",
+        "name": "Pennant"
+      },
+      "balla": {
+        "tier": "A",
+        "name": "Balla"
+      },
+      "dorrclave": {
+        "tier": "A",
+        "name": "Dorrclave"
+      },
+      "sampotes": {
+        "tier": "A",
+        "name": "Sampotes"
+      },
+      "silva_aegis": {
+        "tier": "A",
+        "name": "Silva & Aegis"
+      },
+      "kuva_shildeg": {
+        "tier": "A",
+        "name": "Kuva Shildeg"
+      },
+      "galatine_prime": {
+        "tier": "A",
+        "name": "Galatine Prime"
+      },
+      "plague_keewar": {
+        "tier": "A",
+        "name": "Plague Keewar"
+      },
+      "hespar": {
+        "tier": "A",
+        "name": "Hespar"
+      },
+      "karyst_prime": {
+        "tier": "A",
+        "name": "Karyst Prime"
+      },
+      "skiajati": {
+        "tier": "A",
+        "name": "Skiajati"
+      },
+      "xoris": {
+        "tier": "A",
+        "name": "Xoris"
+      },
+      "vastilok": {
+        "tier": "A",
+        "name": "Vastilok"
+      },
+      "sun_moon": {
+        "tier": "A",
+        "name": "Sun & Moon"
+      },
+      "dual_zoren_prime": {
+        "tier": "A",
+        "name": "Dual Zoren Prime"
+      },
+      "quassus": {
+        "tier": "A",
+        "name": "Quassus"
+      },
+      "tenet_exec": {
+        "tier": "A",
+        "name": "Tenet Exec"
+      },
+      "dex_nikana": {
+        "tier": "A",
+        "name": "Dex Nikana"
+      },
+      "tenet_agendus": {
+        "tier": "A",
+        "name": "Tenet Agendus"
+      },
+      "galariak_prime": {
+        "tier": "A",
+        "name": "Galariak Prime"
+      },
+      "amanata": {
+        "tier": "A",
+        "name": "Amanata"
+      },
+      "cyath": {
+        "tier": "A",
+        "name": "Cyath"
+      },
+      "dual_kamas": {
+        "tier": "A",
+        "name": "Dual Kamas"
+      },
+      "rakta_dark": {
+        "tier": "A",
+        "name": "RAKTA DARK"
+      },
+      "ceti_lacera": {
+        "tier": "A",
+        "name": "Ceti Lacera"
+      },
+      "argo_vel": {
+        "tier": "A",
+        "name": "Argo & Vel"
+      },
+      "dagger": {
+        "tier": "A",
+        "name": "DAGGER"
+      },
+      "dakra_prime": {
+        "tier": "A",
+        "name": "Dakra Prime"
+      },
+      "jat_kusar": {
+        "tier": "A",
+        "name": "Jat Kusar"
+      }
+    },
+    "archwing": {
+      "mausolon": {
+        "tier": "S",
+        "name": "Mausolon"
+      },
+      "amesha": {
+        "tier": "S",
+        "name": "Amesha"
+      },
+      "larkspur_prime": {
+        "tier": "S",
+        "name": "Larkspur Prime"
+      },
+      "kuva_grattler": {
+        "tier": "S",
+        "name": "Kuva Grattler"
+      },
+      "itzal": {
+        "tier": "S",
+        "name": "Itzal"
+      },
+      "arbucep": {
+        "tier": "S",
+        "name": "Arbucep"
+      },
+      "imperator_vandal": {
+        "tier": "A",
+        "name": "Imperator Vandal"
+      },
+      "kuva_ayanga": {
+        "tier": "A",
+        "name": "Kuva Ayanga"
+      },
+      "corvas_prime": {
+        "tier": "A",
+        "name": "Corvas Prime"
+      },
+      "velocitus": {
+        "tier": "A",
+        "name": "Velocitus"
+      },
+      "larkspur": {
+        "tier": "A",
+        "name": "Larkspur"
+      },
+      "morgha": {
+        "tier": "A",
+        "name": "Morgha"
+      },
+      "prisma_dual": {
+        "tier": "A",
+        "name": "PRISMA DUAL"
+      },
+      "fluctus": {
+        "tier": "A",
+        "name": "Fluctus"
+      },
+      "centaur": {
+        "tier": "A",
+        "name": "Centaur"
+      },
+      "cortege": {
+        "tier": "A",
+        "name": "Cortege"
+      },
+      "prisma_veritux_decurions": {
+        "tier": "A",
+        "name": "PRISMA VERITUX DECURIONS"
+      },
+      "mandonel": {
+        "tier": "A",
+        "name": "Mandonel"
+      },
+      "cyngas": {
+        "tier": "A",
+        "name": "Cyngas"
+      },
+      "ironbride": {
+        "tier": "B",
+        "name": "Ironbride"
+      },
+      "odonata": {
+        "tier": "B",
+        "name": "Odonata"
+      },
+      "grattler": {
+        "tier": "B",
+        "name": "Grattler"
+      },
+      "corvas": {
+        "tier": "B",
+        "name": "Corvas"
+      },
+      "phaedra": {
+        "tier": "B",
+        "name": "Phaedra"
+      },
+      "elytron": {
+        "tier": "B",
+        "name": "Elytron"
+      },
+      "kaszas": {
+        "tier": "C",
+        "name": "Kaszas"
+      },
+      "dual_decurion": {
+        "tier": "C",
+        "name": "Dual Decurion"
+      },
+      "knux": {
+        "tier": "C",
+        "name": "Knux"
+      },
+      "imperator": {
+        "tier": "C",
+        "name": "Imperator"
+      },
+      "agkuza": {
+        "tier": "C",
+        "name": "Agkuza"
+      },
+      "onorix": {
+        "tier": "C",
+        "name": "Onorix"
+      },
+      "rathbone": {
+        "tier": "C",
+        "name": "Rathbone"
+      },
+      "veritux": {
+        "tier": "D",
+        "name": "Veritux"
+      }
+    },
+    "companions": {
+      "panzer": {
+        "tier": "S",
+        "name": "PANZER"
+      },
+      "verglas_prime": {
+        "tier": "S",
+        "name": "Verglas Prime"
+      },
+      "vulpaphyla": {
+        "tier": "A",
+        "name": "VULPAPHYLA"
+      },
+      "smeeta_kavat": {
+        "tier": "S",
+        "name": "Smeeta Kavat"
+      },
+      "nautilus": {
+        "tier": "S",
+        "name": "Nautilus"
+      },
+      "helios": {
+        "tier": "S",
+        "name": "Helios"
+      },
+      "verglas": {
+        "tier": "S",
+        "name": "Verglas"
+      },
+      "deconstructor": {
+        "tier": "B",
+        "name": "Deconstructor"
+      },
+      "carrier": {
+        "tier": "A",
+        "name": "Carrier"
+      },
+      "venari": {
+        "tier": "A",
+        "name": "Venari"
+      },
+      "helstrum": {
+        "tier": "A",
+        "name": "Helstrum"
+      },
+      "adarza_kavat": {
+        "tier": "A",
+        "name": "Adarza Kavat"
+      },
+      "dethcube": {
+        "tier": "A",
+        "name": "Dethcube"
+      },
+      "diriga": {
+        "tier": "A",
+        "name": "Diriga"
+      },
+      "bhaira_hound": {
+        "tier": "A",
+        "name": "Bhaira Hound"
+      },
+      "wyrm": {
+        "tier": "A",
+        "name": "Wyrm"
+      },
+      "sly_vulpaphyla": {
+        "tier": "A",
+        "name": "Sly Vulpaphyla"
+      },
+      "dorma_hound": {
+        "tier": "A",
+        "name": "Dorma Hound"
+      },
+      "hec_hound": {
+        "tier": "A",
+        "name": "Hec Hound"
+      },
+      "crescent": {
+        "tier": "A",
+        "name": "CRESCENT"
+      },
+      "deth_machine": {
+        "tier": "C",
+        "name": "DETH MACHINE"
+      },
+      "sweeper_prime": {
+        "tier": "A",
+        "name": "Sweeper Prime"
+      },
+      "djinn": {
+        "tier": "A",
+        "name": "Djinn"
+      },
+      "sahasa_kubrow": {
+        "tier": "A",
+        "name": "Sahasa Kubrow"
+      },
+      "vasca_kavat": {
+        "tier": "A",
+        "name": "Vasca Kavat"
+      },
+      "rifle_prime": {
+        "tier": "A",
+        "name": "RIFLE PRIME"
+      },
+      "cryotra": {
+        "tier": "A",
+        "name": "Cryotra"
+      },
+      "pharaoh": {
+        "tier": "B",
+        "name": "PHARAOH"
+      },
+      "charger": {
+        "tier": "B",
+        "name": "CHARGER"
+      },
+      "predasite": {
+        "tier": "B",
+        "name": "PREDASITE"
+      },
+      "huras_kubrow": {
+        "tier": "B",
+        "name": "Huras Kubrow"
+      },
+      "burst_laser_prime": {
+        "tier": "B",
+        "name": "Burst Laser Prime"
+      },
+      "shade": {
+        "tier": "B",
+        "name": "Shade"
+      },
+      "chesa_kubrow": {
+        "tier": "B",
+        "name": "Chesa Kubrow"
+      },
+      "vulklok": {
+        "tier": "B",
+        "name": "Vulklok"
+      },
+      "akaten": {
+        "tier": "B",
+        "name": "Akaten"
+      },
+      "oxylus": {
+        "tier": "B",
+        "name": "Oxylus"
+      },
+      "vizier_predasite": {
+        "tier": "B",
+        "name": "Vizier Predasite"
+      },
+      "lacerten": {
+        "tier": "B",
+        "name": "Lacerten"
+      },
+      "prime_laser_rifle": {
+        "tier": "B",
+        "name": "Prime Laser Rifle"
+      },
+      "nychus_moa": {
+        "tier": "B",
+        "name": "Nychus Moa"
+      },
+      "lambeo_moa": {
+        "tier": "B",
+        "name": "Lambeo Moa"
+      },
+      "artax": {
+        "tier": "B",
+        "name": "Artax"
+      },
+      "medjay_predasite": {
+        "tier": "B",
+        "name": "Medjay Predasite"
+      },
+      "batoten": {
+        "tier": "B",
+        "name": "Batoten"
+      },
+      "prisma_burst": {
+        "tier": "B",
+        "name": "PRISMA BURST"
+      },
+      "laser": {
+        "tier": "B",
+        "name": "LASER"
+      },
+      "para_moa": {
+        "tier": "B",
+        "name": "Para Moa"
+      },
+      "oloro_moa": {
+        "tier": "B",
+        "name": "Oloro Moa"
+      },
+      "sunika_kubrow": {
+        "tier": "B",
+        "name": "Sunika Kubrow"
+      },
+      "tazicor": {
+        "tier": "B",
+        "name": "Tazicor"
+      },
+      "raksa_kubrow": {
+        "tier": "C",
+        "name": "Raksa Kubrow"
+      },
+      "taxon": {
+        "tier": "C",
+        "name": "Taxon"
+      },
+      "vulcax": {
+        "tier": "C",
+        "name": "Vulcax"
+      },
+      "rifle": {
+        "tier": "C",
+        "name": "RIFLE"
+      },
+      "sweeper": {
+        "tier": "C",
+        "name": "Sweeper"
+      },
+      "stinger": {
+        "tier": "C",
+        "name": "Stinger"
+      },
+      "laser_rifle": {
+        "tier": "C",
+        "name": "Laser Rifle"
+      }
+    }
+  }
+}

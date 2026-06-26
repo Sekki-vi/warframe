@@ -18,8 +18,8 @@ try:
 except ImportError:
     pass
 
-from agent.forecasting.backtest import walk_forward_backtest
-from agent.forecasting.warframe_forecast_agent import WarframeMarketError
+from agents.forecasting.backtest import walk_forward_backtest
+from agents.forecasting.warframe_forecast_agent import WarframeMarketError
 
 
 def _print_item_report(result) -> None:
