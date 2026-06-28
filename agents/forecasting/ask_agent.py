@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any
 
@@ -22,15 +23,16 @@ Return JSON with exactly these keys:
 Rules:
 - If two or more items are mentioned for comparison, use compare_items.
 - Resolve informal item names to likely Warframe Market names (e.g. "mag prime" -> "Mag Prime Set").
+- If the message is a follow-up (e.g. "tell me more", "same item", "what about X instead", "2 months") and omits item names, infer items, timeframe, and skill from recent conversation.
+- Prefer the most recently discussed forecast item when ambiguous.
 - Do not answer the question; only extract the plan.
 """
-
 NARRATIVE_SYSTEM = """You are the narrative layer for a Warframe Market forecasting subagent.
 
 Write a direct answer in 4-5 sentences maximum.
 - Answer only what the user asked; do not add extra context.
 - Include at most 2–3 key numbers (e.g. last price and forecast direction).
-- No bullet points, no disclaimers, no confidence-interval breakdown.
+- No bullet points, no disclaimers, no confidence-interval breakdown, unless asked by the user.
 - Do not include chart links — they are appended separately after your answer.
 - Ground every claim in the provided data. Do not invent prices or trends.
 """
@@ -45,6 +47,17 @@ The user asked for more detail. Write a clear answer in plain English:
 - Ground every claim in the provided data; do not invent prices
 - One brief disclaimer that this is probabilistic, not guaranteed advice
 """
+
+
+def _max_history_turns() -> int:
+    return max(1, int(os.getenv("MAX_HISTORY", "20")))
+
+
+def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
+    max_turns = _max_history_turns()
+    if len(history) <= max_turns * 2:
+        return history
+    return history[-(max_turns * 2) :]
 
 
 def _wants_detail(question: str) -> bool:
@@ -140,8 +153,12 @@ def _looks_like_question(text: str) -> bool:
     return any(cue in lowered for cue in cues)
 
 
-def extract_plan(question: str) -> dict[str, Any]:
-    plan = chat_json(EXTRACTION_SYSTEM, question)
+def extract_plan(
+    question: str,
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
+    trimmed = _trim_history(list(history or []))
+    plan = chat_json(EXTRACTION_SYSTEM, question, history=trimmed)
     skill = plan.get("skill", "forecast_item")
     if skill not in {"forecast_item", "compare_items"}:
         skill = "compare_items" if len(plan.get("items") or []) >= 2 else "forecast_item"
@@ -160,8 +177,14 @@ def extract_plan(question: str) -> dict[str, Any]:
     return plan
 
 
-def generate_answer(question: str, result: dict[str, Any], plan: dict[str, Any]) -> str:
+def generate_answer(
+    question: str,
+    result: dict[str, Any],
+    plan: dict[str, Any],
+    history: list[dict[str, str]] | None = None,
+) -> str:
     detail = _wants_detail(question)
+    trimmed = _trim_history(list(history or []))
     if detail:
         compact = {
             "question": question,
@@ -184,6 +207,7 @@ def generate_answer(question: str, result: dict[str, Any], plan: dict[str, Any])
     return chat_text(
         system,
         f"User question:\n{question}\n\nStructured forecast data:\n{user_payload}",
+        history=trimmed,
         temperature=0.2,
     )
 
@@ -191,8 +215,8 @@ def generate_answer(question: str, result: dict[str, Any], plan: dict[str, Any])
 def ask_market_question(
     question: str,
     *,
-    base_url: str | None = None,
-    timeframe: str | None = None,
+    history: list[dict[str, str]] | None = None,
+    base_url: str | None = None,    timeframe: str | None = None,
     price_field: str | None = None,
     horizon: int | None = None,
     points: int = 60,
@@ -206,12 +230,11 @@ def ask_market_question(
         raise WarframeMarketError("Provide a question about Warframe Market prices")
 
     try:
-        plan = extract_plan(question)
+        plan = extract_plan(question, history=history)
     except LLMConfigError:
         raise
     except Exception as exc:
         raise WarframeMarketError(f"Could not interpret question: {exc}") from exc
-
     if timeframe:
         plan["timeframe"] = timeframe
     if price_field:
@@ -245,16 +268,21 @@ def ask_market_question(
         result = forecast_item(items[0], **kwargs)
 
     try:
-        answer = generate_answer(question, result, plan)
+        answer = generate_answer(question, result, plan, history=history)
     except LLMConfigError:
         raise
     except Exception as exc:
         raise WarframeMarketError(f"Forecast succeeded but narrative generation failed: {exc}") from exc
 
+    updated = list(history or [])
+    updated.append({"role": "user", "content": question})
+    updated.append({"role": "assistant", "content": answer})
+
     result["skill"] = "ask_market_question"
     result["question"] = question
     result["plan"] = plan
     result["answer"] = answer
+    result["history"] = updated
     result["llm_model"] = get_model()
     result["agent"] = "warframe_forecasting_agent"
     return result

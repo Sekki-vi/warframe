@@ -29,18 +29,34 @@ def get_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def chat_json(system: str, user: str, *, temperature: float = 0.1) -> dict[str, Any]:
+def _build_messages(
+    system: str,
+    user: str,
+    history: list[dict[str, str]] | None,
+) -> list[dict[str, str]]:
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": user})
+    return messages
+
+
+def chat_json(
+    system: str,
+    user: str,
+    *,
+    history: list[dict[str, str]] | None = None,
+    temperature: float = 0.1,
+) -> dict[str, Any]:
     client = get_client()
     model = get_model()
+    messages = _build_messages(system, user, history)
     try:
         response = client.chat.completions.create(
             model=model,
             temperature=temperature,
             response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            messages=messages,
         )
     except Exception as exc:
         if model != FALLBACK_MODEL:
@@ -48,10 +64,7 @@ def chat_json(system: str, user: str, *, temperature: float = 0.1) -> dict[str, 
                 model=FALLBACK_MODEL,
                 temperature=temperature,
                 response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
+                messages=messages,
             )
         else:
             raise RuntimeError(f"OpenAI request failed: {exc}") from exc
@@ -63,27 +76,28 @@ def chat_json(system: str, user: str, *, temperature: float = 0.1) -> dict[str, 
     return payload
 
 
-def chat_text(system: str, user: str, *, temperature: float = 0.3) -> str:
+def chat_text(
+    system: str,
+    user: str,
+    *,
+    history: list[dict[str, str]] | None = None,
+    temperature: float = 0.3,
+) -> str:
     client = get_client()
     model = get_model()
+    messages = _build_messages(system, user, history)
     try:
         response = client.chat.completions.create(
             model=model,
             temperature=temperature,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            messages=messages,
         )
     except Exception as exc:
         if model != FALLBACK_MODEL:
             response = client.chat.completions.create(
                 model=FALLBACK_MODEL,
                 temperature=temperature,
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
+                messages=messages,
             )
         else:
             raise RuntimeError(f"OpenAI request failed: {exc}") from exc
