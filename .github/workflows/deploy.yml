@@ -1,0 +1,35 @@
+name: Deploy to Void Rig
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VOID_RIG_IP }}
+          username: ${{ secrets.VOID_RIG_USER }}
+          key: ${{ secrets.VOID_RIG_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd /home/${{ secrets.VOID_RIG_USER }}/warframe
+
+            echo "→ Pulling latest code..."
+            git pull origin main
+
+            echo "→ Installing dependencies..."
+            pip3 install -r requirements.txt --break-system-packages -q
+
+            echo "→ Restarting services..."
+            sudo systemctl restart warframe-manager
+            sudo systemctl restart warframe-ui
+
+            echo "→ Health check..."
+            sleep 3
+            curl -sf http://localhost:8602/health | python3 -c "import sys,json; d=json.load(sys.stdin); print('Health OK:', d['status'])"
+            echo "✓ Deploy complete."

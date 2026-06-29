@@ -1,0 +1,17 @@
+[Unit]
+Description=Warframe Streamlit UI
+After=network.target warframe-manager.service
+
+[Service]
+Type=simple
+User=azureuser
+WorkingDirectory=/home/azureuser/warframe
+EnvironmentFile=/home/azureuser/warframe/.env
+ExecStart=/usr/bin/python3 -m streamlit run app.py --server.port 8603 --server.address 0.0.0.0 --server.headless true
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

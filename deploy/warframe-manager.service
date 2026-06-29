@@ -1,0 +1,17 @@
+[Unit]
+Description=Warframe Manager Agent (FastAPI)
+After=network.target
+
+[Service]
+Type=simple
+User=azureuser
+WorkingDirectory=/home/azureuser/warframe
+EnvironmentFile=/home/azureuser/warframe/.env
+ExecStart=/usr/bin/python3 -m uvicorn agents.manager.api:app --host 0.0.0.0 --port 8602
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
