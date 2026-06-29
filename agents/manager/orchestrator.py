@@ -6,7 +6,7 @@ import re
 
 from agents.forecasting.ask_agent import ask_market_question, item_names_from_result
 from agents.knowledge.agent import answer as knowledge_answer
-from agents.manager.guardrails import run_guardrails
+from agents.manager.guardrails import check_outgoing, run_guardrails
 from agents.manager.responses import format_knowledge_reply, knowledge_sources, market_sources
 from agents.manager.router import RoutePlan, classify, is_recommendation_query
 from agents.manager import session
@@ -262,6 +262,10 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
                     agents_called.append("ranking")
                 record_agent = "knowledge"
 
+    outgoing = check_outgoing(response)
+    response = outgoing.response
+    out_flagged = guard.flagged or bool(outgoing.reason)
+
     item_name, item_slug = _item_from_result(result, record_agent)
     session.append_turn(
         session_id,
@@ -274,13 +278,13 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
 
     out = {
         "response": response,
-        "agents_called": agents_called,
-        "guardrail_flagged": guard.flagged,
+        "agents_called": agents_called if outgoing.ok else [],
+        "guardrail_flagged": out_flagged,
     }
-    if plan.agent == "forecasting" and result.get("plot_url"):
+    if outgoing.ok and plan.agent == "forecasting" and result.get("plot_url"):
         out["plot_url"] = result["plot_url"]
         names = item_names_from_result(result)
         out["chart_label"] = f"Forecast chart — {', '.join(names)}" if names else "Forecast chart"
-    if sources:
+    if outgoing.ok and sources:
         out["sources"] = sources
     return out

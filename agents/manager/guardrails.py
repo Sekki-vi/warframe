@@ -94,11 +94,96 @@ def _is_in_scope(text: str) -> bool:
         return True  # on any error → don't block
 
 
+_SECRET_PATTERNS = (
+    r"sk-[A-Za-z0-9_-]{20,}",          # OpenAI key
+    r"pcsk_[A-Za-z0-9_-]{20,}",        # Pinecone key
+    r"gh[pousr]_[A-Za-z0-9]{20,}",     # GitHub token
+    r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
+)
+
+_TRACEBACK_RE = re.compile(r"Traceback \(most recent call last\)|File \"[^\"]+\", line \d+", re.I)
+
+_UNGROUNDED_GUARANTEE_RE = re.compile(
+    r"\b(guaranteed\s+(to\s+)?(profit|return|win|increase|decrease|rise|fall|go\s+up|go\s+down)|"
+    r"100%\s+(guaranteed|profit|return|certain)|"
+    r"certain(ly)?\s+(to\s+)?(profit|increase|decrease)|risk[\s-]?free)\b",
+    re.I,
+)
+
+_SYSTEM_LEAK_RE = re.compile(
+    r"you are a warframe market trading sub-agent|"
+    r"you guard a warframe market trading assistant|"
+    r"classify warframe assistant routing|"
+    r"do not answer the user question",
+    re.I,
+)
+
+_MAX_RESPONSE_LEN = 6000
+
+
 @dataclass
 class GuardrailResult:
     blocked: bool = False
     flagged: bool = False
     message: str = ""
+
+
+@dataclass
+class OutgoingResult:
+    ok: bool = True
+    response: str = ""
+    reason: str = ""
+
+
+def check_outgoing(response: str) -> OutgoingResult:
+    """Validate/sanitize the agent's response before it reaches the user."""
+    text = (response or "").strip()
+
+    if not text:
+        return OutgoingResult(
+            ok=False,
+            response="I wasn't able to generate a response for that. Could you rephrase?",
+            reason="empty_response",
+        )
+
+    for pattern in _SECRET_PATTERNS:
+        if re.search(pattern, text):
+            return OutgoingResult(
+                ok=False,
+                response="I hit an internal error generating that response. Please try again.",
+                reason="secret_leak",
+            )
+
+    if _TRACEBACK_RE.search(text):
+        return OutgoingResult(
+            ok=False,
+            response="I hit an internal error generating that response. Please try again.",
+            reason="traceback_leak",
+        )
+
+    if _SYSTEM_LEAK_RE.search(text):
+        return OutgoingResult(
+            ok=False,
+            response="I wasn't able to generate a proper response for that. Could you rephrase?",
+            reason="system_prompt_leak",
+        )
+
+    sanitized = text
+    flagged_guarantee = bool(_UNGROUNDED_GUARANTEE_RE.search(text))
+    if flagged_guarantee:
+        sanitized = (
+            "Note: market forecasts are probabilistic estimates, not guaranteed trading advice.\n\n"
+            + text
+        )
+
+    if len(sanitized) > _MAX_RESPONSE_LEN:
+        sanitized = sanitized[:_MAX_RESPONSE_LEN].rstrip() + "\n\n…(truncated)"
+
+    return OutgoingResult(
+        ok=True,
+        response=sanitized,
+        reason="guarantee_disclaimer_added" if flagged_guarantee else "",
+    )
 
 
 def run_guardrails(message: str) -> GuardrailResult:
