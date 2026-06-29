@@ -14,7 +14,10 @@ _FORECAST_RE = re.compile(
     r"forecast|predict|prediction|median|mean|trend|history|historical|"
     r"90\s*days?|48\s*hours?|timeframe|statistics|stats|"
     r"should i buy|should i sell|best time|good time|when should|"
-    r"when to buy|when to sell|price trend|moving avg|confidence interval"
+    r"when to buy|when to sell|price trend|moving avg|confidence interval|"
+    r"invest|investment|next\s+\d+\s+(day|week|month)s?|"
+    r"in\s+the\s+next|future\s+price|worth\s+(buying|it)|"
+    r"good\s+investment|price\s+in\s+\d|will\s+(it|the\s+price)|going\s+up|going\s+down"
     r")\b",
     re.I,
 )
@@ -36,7 +39,11 @@ _LIVE_MARKET_RE = re.compile(
 )
 
 _PORTFOLIO_RE = re.compile(
-    r"\b(portfolio|holdings|my trades|trade history|log (a )?buy|log (a )?sell)\b",
+    r"\b("
+    r"portfolio|holdings|my trades|trade history|log (a )?buy|log (a )?sell|"
+    r"inventory|my inventory|my items|my stuff|what (do )?i (own|have)|"
+    r"what('s| is) in my|show my|my collection|my assets"
+    r")\b",
     re.I,
 )
 

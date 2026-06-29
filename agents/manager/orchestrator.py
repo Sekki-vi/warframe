@@ -15,6 +15,17 @@ from agents.market.tools.wfm_api import find_items_in_text
 from agents.ranking.enrich import enrich_response
 
 
+_MULTI_LIVE_RE = re.compile(
+    r"\b(current\s+price|right\s+now|who\s+is\s+selling|live\s+(price|order)|"
+    r"cheapest\s+(now|today)|orders?\s+(now|today|right\s+now)|currently\s+(selling|listed))\b",
+    re.I,
+)
+_MULTI_FORECAST_RE = re.compile(
+    r"\b(forecast|predict|next\s+week|next\s+month|invest|investment|"
+    r"price\s+in\s+\d|will\s+(it|the\s+price)|going\s+up|going\s+down|trend)\b",
+    re.I,
+)
+
 _FORECAST_FOLLOWUP_CUES = (
     "tell me more",
     "more detail",
@@ -75,8 +86,21 @@ def _resolve_followup_message(message: str, plan: RoutePlan, meta: dict[str, str
     return f"Regarding {item}: {message}"
 
 
+_PORTFOLIO_CUES = re.compile(
+    r"\b(portfolio|holdings|inventory|my trades|my items|my stuff|"
+    r"what (do )?i (own|have)|my collection|my assets|trade history)\b",
+    re.I,
+)
+
+
 def _should_use_knowledge_backup(message: str, market_result: dict) -> bool:
+    # Never override a meaningful market response with knowledge
     if market_result.get("resolved_slug"):
+        return False
+    if market_result.get("response", "").strip():
+        return False
+    # Portfolio queries always belong to market — never fall back to knowledge
+    if _PORTFOLIO_CUES.search(message):
         return False
     return True
 
@@ -145,7 +169,12 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         else ""
     )
 
-    if plan.agent == "forecasting":
+    # Multi-agent only when message EXPLICITLY asks for both live data AND forecast/investment
+    needs_multi = (
+        bool(_MULTI_LIVE_RE.search(message)) and bool(_MULTI_FORECAST_RE.search(message))
+    )
+
+    if plan.agent == "forecasting" and not needs_multi:
         chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
         history = _forecast_history_for_query(session_id, conversation, resolved_message)
         result = ask_market_question(resolved_message, history=history, base_url=chart_base)
@@ -153,6 +182,32 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         response = disclaimer + (result.get("answer") or "")
         agents_called = ["forecasting"]
         record_agent = "forecasting"
+
+    elif needs_multi:
+        # Call market for live prices/orders + forecasting for trend/investment analysis
+        chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
+        # Ask market only about live current data so it doesn't deflect to forecasting
+        live_prompt = f"Show me the current live buy/sell orders and price for: {resolved_message}"
+        market_result = market_answer(live_prompt, session_id=session_id, history=conversation)
+        f_history = _forecast_history_for_query(session_id, conversation, resolved_message)
+        f_result = ask_market_question(resolved_message, history=f_history, base_url=chart_base)
+        session.save_forecast_history(session_id, f_result.get("history") or f_history)
+
+        market_part = (market_result.get("response") or "").strip()
+        forecast_part = (f_result.get("answer") or "").strip()
+
+        parts = []
+        if market_part:
+            parts.append(f"**Live Market:**\n{market_part}")
+        if forecast_part:
+            parts.append(f"**Forecast & Analysis:**\n{forecast_part}")
+        response = disclaimer + "\n\n".join(parts)
+        result = f_result
+        agents_called = ["market", "forecasting"]
+        if market_result.get("tier"):
+            agents_called.append("ranking")
+        record_agent = "forecasting"
+
     else:
         market_result = market_answer(
             resolved_message,
