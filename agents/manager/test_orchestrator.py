@@ -79,14 +79,19 @@ class OrchestratorContextTests(unittest.TestCase):
         from agents.manager.router import RoutePlan
 
         mock_classify.return_value = RoutePlan(agent="market", reason="default_market")
-        mock_market.return_value = {"response": "Could not find item.", "resolved_slug": ""}
+        # Market defers out-of-scope lore questions to Knowledge.
+        mock_market.return_value = {
+            "response": "",
+            "resolved_slug": "",
+            "needs_knowledge": True,
+        }
         mock_knowledge.return_value = {
-            "reply": "",
+            "reply": "Saryn is a toxic warframe, Operator.",
             "sources": [{"name": "Saryn", "description": "Toxic frame."}],
             "resolved_slug": "saryn",
         }
         mock_enrich.side_effect = lambda r: r
-        mock_format.return_value = ""
+        mock_format.return_value = "Saryn is a toxic warframe, Operator."
         mock_sources.return_value = [{"name": "Saryn", "description": "Toxic frame."}]
 
         out = handle_query("tell me about saryn abilities", "user", "orch-test")
@@ -95,6 +100,32 @@ class OrchestratorContextTests(unittest.TestCase):
         mock_knowledge.assert_called_once()
         self.assertEqual(out["agents_called"][:2], ["market", "knowledge"])
         self.assertTrue(out.get("sources"))
+        self.assertIn("toxic warframe", out["response"])
+
+    @patch("agents.manager.orchestrator.find_items_in_text", return_value=[])
+    @patch("agents.manager.orchestrator.market_answer")
+    @patch("agents.manager.orchestrator.knowledge_answer")
+    @patch("agents.manager.orchestrator.classify")
+    def test_no_knowledge_backup_for_recommendations(
+        self,
+        mock_classify,
+        mock_knowledge,
+        mock_market,
+        _mock_find,
+    ):
+        from agents.manager.router import RoutePlan
+
+        mock_classify.return_value = RoutePlan(agent="market", reason="recommend_market")
+        mock_market.return_value = {
+            "response": "Here are some prime warframes to consider...",
+            "resolved_slug": "",
+        }
+
+        out = handle_query("recommend a good prime warframe to buy", "user", "orch-test")
+
+        mock_market.assert_called_once()
+        mock_knowledge.assert_not_called()
+        self.assertEqual(out["agents_called"], ["market"])
 
     @patch("agents.manager.orchestrator.find_items_in_text", return_value=[])
     @patch("agents.manager.orchestrator.market_answer")
@@ -113,13 +144,23 @@ class OrchestratorContextTests(unittest.TestCase):
         mock_market.return_value = {
             "response": "Saryn Prime Set is not vaulted.",
             "resolved_slug": "saryn_prime_set",
+            "tier": "S",
+            "sources": [{
+                "name": "Saryn Prime Set",
+                "description": "Prime warframe set.",
+                "tier": "S",
+                "image_url": "https://example.com/saryn.png",
+                "wiki_link": "",
+                "drop_sources": [],
+            }],
         }
 
         out = handle_query("is saryn prime vaulted", "user", "orch-test")
 
         mock_market.assert_called_once()
         mock_knowledge.assert_not_called()
-        self.assertEqual(out["agents_called"], ["market"])
+        self.assertEqual(out["agents_called"], ["market", "ranking"])
+        self.assertEqual(out["sources"][0]["tier"], "S")
 
 
 if __name__ == "__main__":

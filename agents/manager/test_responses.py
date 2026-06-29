@@ -7,12 +7,16 @@ from agents.manager.responses import format_knowledge_reply
 
 
 class ResponseFormatTests(unittest.TestCase):
-    def test_empty_reply_when_sources_present(self) -> None:
+    def test_reply_returned_alongside_sources(self) -> None:
+        # Narrative generation now accompanies the source cards.
         result = {
-            "reply": "I do not have enough context.",
+            "reply": "Saryn Prime is a toxic warframe, Operator.",
             "sources": [{"name": "Saryn Prime", "description": "A warframe."}],
         }
-        self.assertEqual(format_knowledge_reply(result), "")
+        self.assertEqual(
+            format_knowledge_reply(result),
+            "Saryn Prime is a toxic warframe, Operator.",
+        )
 
     def test_reply_when_no_sources(self) -> None:
         result = {"reply": "No matching items were found in the knowledge corpus."}

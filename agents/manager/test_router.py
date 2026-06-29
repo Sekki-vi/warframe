@@ -65,7 +65,6 @@ class RouterTests(unittest.TestCase):
             "keyword_flags": {**PRIME_CONTEXT["keyword_flags"], "live_market": True},
         }
         mock_llm.return_value = {
-            "primary_agent": "market",
             "item_query": "Saryn Prime Set",
             "needs_forecast": False,
             "reason": "live_orders",
@@ -78,45 +77,44 @@ class RouterTests(unittest.TestCase):
 
     @patch("agents.manager.router.classify_with_llm")
     @patch("agents.manager.router.build_routing_context")
-    def test_llm_wfm_miss_can_still_return_knowledge(self, mock_context, mock_llm):
+    def test_llm_non_forecast_routes_to_market(self, mock_context, mock_llm):
+        # The classifier no longer picks Knowledge; non-forecast queries route to
+        # Market and the orchestrator handles the Knowledge fallback itself.
         mock_context.return_value = BASE_CONTEXT
         mock_llm.return_value = {
-            "primary_agent": "knowledge",
-            "item_query": "Saryn",
             "needs_forecast": False,
+            "item_query": "Saryn",
             "reason": "base_frame_abilities",
         }
 
         plan = classify("tell me about saryn abilities")
 
-        self.assertEqual(plan.agent, "knowledge")
+        self.assertEqual(plan.agent, "market")
         self.assertEqual(plan.reason, "base_frame_abilities")
 
     @patch("agents.manager.router.classify_with_llm")
     @patch("agents.manager.router.build_routing_context")
-    def test_llm_knowledge_overridden_when_wfm_hit(self, mock_context, mock_llm):
+    def test_llm_needs_forecast_routes_to_forecasting(self, mock_context, mock_llm):
         mock_context.return_value = PRIME_CONTEXT
         mock_llm.return_value = {
-            "primary_agent": "knowledge",
-            "item_query": "Saryn Prime",
-            "needs_forecast": False,
-            "reason": "prime_abilities_lore",
+            "needs_forecast": True,
+            "item_query": "Saryn Prime Set",
+            "reason": "price_trend_analysis",
         }
 
-        plan = classify("tell me about saryn prime abilities")
+        plan = classify("how has saryn prime been trending in value")
 
-        self.assertEqual(plan.agent, "market")
-        self.assertEqual(plan.reason, "llm_knowledge_overridden_wfm_hit")
+        self.assertEqual(plan.agent, "forecasting")
+        self.assertEqual(plan.item_query, "Saryn Prime Set")
+        self.assertEqual(plan.reason, "price_trend_analysis")
 
     @patch("agents.manager.router.classify_with_llm")
     @patch("agents.manager.router.build_routing_context")
     def test_llm_prime_vaulted_routes_to_market(self, mock_context, mock_llm):
         mock_context.return_value = PRIME_CONTEXT
         mock_llm.return_value = {
-            "primary_agent": "market",
-            "item_query": "Saryn Prime Set",
             "needs_forecast": False,
-            "warframe_variant": "prime",
+            "item_query": "Saryn Prime Set",
             "reason": "prime_vaulted_status",
         }
 
@@ -135,6 +133,40 @@ class RouterTests(unittest.TestCase):
 
         self.assertEqual(plan.agent, "forecasting")
         self.assertEqual(plan.reason, "forecast_keywords")
+
+    @patch("agents.manager.router.find_items_in_text")
+    @patch("agents.manager.router.search")
+    def test_price_history_routes_to_forecasting(self, mock_search, mock_find):
+        mock_find.return_value = SARYN_HITS
+        mock_search.return_value = {"results": SARYN_HITS}
+
+        plan = classify("what's the price history of saryn prime")
+
+        self.assertEqual(plan.agent, "forecasting")
+        self.assertEqual(plan.reason, "forecast_keywords")
+
+    def test_trade_history_routes_to_market_not_forecasting(self):
+        # "history" must not pull a portfolio query into Forecasting.
+        plan = classify("show my trade history")
+
+        self.assertEqual(plan.agent, "market")
+        self.assertEqual(plan.reason, "portfolio")
+
+    @patch("agents.manager.router.classify_with_llm", return_value=None)
+    @patch("agents.manager.router.build_routing_context")
+    def test_ambiguous_words_without_price_context_not_forecast(
+        self, mock_context, _mock_llm
+    ):
+        # Bare "mean" / "history" / "stats" without a price word stay off Forecasting.
+        mock_context.return_value = BASE_CONTEXT
+        for message in (
+            "what do you mean by vaulted",
+            "tell me the history of warframe",
+            "give me stats on the braton",
+        ):
+            with self.subTest(message=message):
+                plan = classify(message)
+                self.assertNotEqual(plan.agent, "forecasting")
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": ""}, clear=False)
     @patch("agents.manager.router.classify_with_llm", return_value=None)

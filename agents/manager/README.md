@@ -23,15 +23,15 @@ The Manager uses an **LLM-first router** (`MANAGER_CHAT_MODEL`) enriched with ro
 | Forecast / timing keywords | Forecasting |
 | Portfolio / trade logging | Market |
 | Everything else (incl. recommendations) | **Market first** |
-| WFM miss or Market unresolved + corpus hit | **Knowledge backup** |
+| Market defers (out of trading scope) | **Knowledge backup** |
 
-Flow: non-forecast queries always call **Market** first. If Market does not resolve an item (`resolved_slug` empty), the orchestrator tries **Knowledge** and uses the result only when the corpus returns source cards.
+Flow: non-forecast queries always call **Market** first. Market answers anything about prices, orders, tiers, or the portfolio. When a question is outside trading scope (lore, abilities, mechanics, quests, drop/farming locations), the Market agent calls its `defer_to_knowledge` tool, which sets `needs_knowledge` on the result; only then does the orchestrator invoke **Knowledge**. (As a safety net, Knowledge is also tried when Market resolves no item and returns an empty answer.) Recommendation queries never invoke Knowledge — Market handles them alone.
 
 Recommendations ("recommend a good…", "best X to buy") route to Market via hard rules and LLM prompt defaults.
 
 Ranking enriches Knowledge and Market responses via `enrich_response` / `lookup_tier`.
 
-When Knowledge matches an item, the UI shows a structured **info card** only (no narrative LLM text). Unmatched queries return a short static not-found message.
+When Knowledge matches an item, it returns a generated **Ordis narrative** alongside the structured **info card** (sources). Unmatched queries return a short static not-found message.
 
 ## Session memory
 

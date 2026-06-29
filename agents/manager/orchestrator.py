@@ -7,8 +7,8 @@ import re
 from agents.forecasting.ask_agent import ask_market_question, item_names_from_result
 from agents.knowledge.agent import answer as knowledge_answer
 from agents.manager.guardrails import run_guardrails
-from agents.manager.responses import format_knowledge_reply, knowledge_sources
-from agents.manager.router import RoutePlan, classify
+from agents.manager.responses import format_knowledge_reply, knowledge_sources, market_sources
+from agents.manager.router import RoutePlan, classify, is_recommendation_query
 from agents.manager import session
 from agents.market import answer as market_answer
 from agents.market.tools.wfm_api import find_items_in_text
@@ -94,17 +94,32 @@ _PORTFOLIO_CUES = re.compile(
     re.I,
 )
 
+_MARKET_DEFLECTION_RE = re.compile(
+    r"can'?t (provide|help|answer|give)|"
+    r"consult (a|an|another)|dedicated source|authoritative source|"
+    r"don'?t have (the )?(details|information)|outside .{0,20}scope|"
+    r"refer to (a|an|another|the)",
+    re.I,
+)
+
 
 def _should_use_knowledge_backup(message: str, market_result: dict) -> bool:
-    # Never override a meaningful market response with knowledge
-    if market_result.get("resolved_slug"):
+    if is_recommendation_query(message):
         return False
-    if market_result.get("response", "").strip():
-        return False
-    # Portfolio queries always belong to market — never fall back to knowledge
+    # Portfolio queries always belong to market — never fall back to knowledge.
     if _PORTFOLIO_CUES.search(message):
         return False
-    return True
+    # The market agent decides: it calls defer_to_knowledge when a question is
+    # outside trading scope (lore, abilities, quests, drops).
+    if market_result.get("needs_knowledge"):
+        return True
+    # Safety net: market resolved no item and either gave no answer or deflected
+    # (refused / told the user to consult another source) instead of deferring.
+    if not market_result.get("resolved_slug"):
+        response = (market_result.get("response") or "").strip()
+        if not response or _MARKET_DEFLECTION_RE.search(response):
+            return True
+    return False
 
 
 def _item_from_result(result: dict, agent: str) -> tuple[str, str]:
@@ -219,6 +234,7 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         result = market_result
         response = disclaimer + (market_result.get("response") or "")
         agents_called = ["market"]
+        sources = market_sources(market_result)
         if market_result.get("tier"):
             agents_called.append("ranking")
         record_agent = "market"
@@ -226,9 +242,10 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         if _should_use_knowledge_backup(message, market_result):
             k_history = session.get_conversation(session_id)
             k_result = enrich_response(knowledge_answer(resolved_message, history=k_history))
-            if k_result.get("sources"):
+            reply_text = format_knowledge_reply(k_result)
+            if k_result.get("sources") or reply_text:
                 result = k_result
-                response = disclaimer + format_knowledge_reply(k_result)
+                response = disclaimer + reply_text
                 sources = knowledge_sources(k_result)
                 agents_called = ["market", "knowledge"]
                 if k_result.get("tier"):

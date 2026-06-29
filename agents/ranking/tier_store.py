@@ -49,6 +49,61 @@ def _get_list(equipment_class: str) -> dict[str, Any]:
     return _load_overframe().get(category) or {}
 
 
+_PART_SUFFIXES = (
+    "_neuroptics_blueprint",
+    "_chassis_blueprint",
+    "_systems_blueprint",
+    "_blueprint",
+    "_neuroptics",
+    "_chassis",
+    "_systems",
+    "_set",
+    "_barrel",
+    "_blade",
+    "_handle",
+    "_receiver",
+    "_stock",
+    "_link",
+    "_guard",
+    "_string",
+    "_lower_guard",
+    "_upper_guard",
+    "_flight_system",
+    "_harness",
+    "_wings",
+)
+
+
+def tier_slug_candidates(wfm_slug: str) -> list[str]:
+    """Generate slug variants for Overframe tier lookup from WFM item slugs."""
+    slug = (wfm_slug or "").lower().strip()
+    if not slug:
+        return []
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        if value and value not in seen:
+            seen.add(value)
+            candidates.append(value)
+
+    add(slug)
+    current = slug
+    changed = True
+    while changed:
+        changed = False
+        for suffix in _PART_SUFFIXES:
+            if current.endswith(suffix):
+                current = current[: -len(suffix)]
+                add(current)
+                changed = True
+                break
+    if "_prime" in slug:
+        add(slug.split("_prime", 1)[0])
+        add(re.sub(r"_prime(_.*)?$", "", slug))
+    return candidates
+
+
 def lookup_tier(slug: str, equipment_class: str) -> str:
     """Return tier letter S–D or empty string."""
     data = _get_list(equipment_class)
@@ -117,4 +172,8 @@ def lookup_tier_from_wfm(slug: str, tags: list[str]) -> str:
     equipment_class = equipment_class_from_wfm_tags(tags)
     if not equipment_class:
         return ""
-    return lookup_tier(slug, equipment_class)
+    for candidate in tier_slug_candidates(slug):
+        tier = lookup_tier(candidate, equipment_class)
+        if tier:
+            return tier
+    return ""

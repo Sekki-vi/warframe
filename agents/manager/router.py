@@ -9,26 +9,50 @@ from agents.manager.router_llm import classify_with_llm
 from agents.market import search
 from agents.market.tools.wfm_api import find_items_in_text
 
-_FORECAST_RE = re.compile(
+# Unambiguous forecast/timing intent — these fire the forecasting hard rule on
+# their own. Kept deliberately narrow: every token here is rare outside of price
+# history / buy-sell timing analysis.
+_STRONG_FORECAST_RE = re.compile(
     r"\b("
-    r"forecast|predict|prediction|median|mean|trend|history|historical|"
-    r"90\s*days?|48\s*hours?|timeframe|statistics|stats|"
-    r"should i buy|should i sell|best time|good time|when should|"
-    r"when to buy|when to sell|price trend|moving avg|confidence interval|"
-    r"invest|investment|next\s+\d+\s+(day|week|month)s?|"
-    r"in\s+the\s+next|future\s+price|worth\s+(buying|it)|"
-    r"good\s+investment|price\s+in\s+\d|will\s+(it|the\s+price)|going\s+up|going\s+down"
+    r"forecast|predict|prediction|median|moving avg(?:erage)?|"
+    r"confidence interval|price (?:history|trend)|"
+    r"90\s*days?|48\s*hours?|"
+    r"good time|best time|should i buy|should i sell|"
+    r"when to buy|when to sell|when should i (?:buy|sell)|"
+    r"buy timing|sell timing|"
+    r"invest|investment|next\s+\d+\s+(?:day|week|month)s?|"
+    r"in\s+the\s+next|future\s+price|worth\s+(?:buying|it)|"
+    r"good\s+investment|price\s+in\s+\d|will\s+(?:it|the\s+price)|going\s+up|going\s+down"
     r")\b",
+    re.I,
+)
+
+# Ambiguous words that are ALSO ordinary English (lore "history", item "stats",
+# "what do you mean"). They only count as forecast intent when a price/market
+# word co-occurs in the same message; otherwise Market/Knowledge handle them.
+_CONTEXTUAL_FORECAST_RE = re.compile(
+    r"\b(mean|trend|history|historical|statistics|stats|timeframe)\b",
+    re.I,
+)
+
+_PRICE_CONTEXT_RE = re.compile(
+    r"\b(price|prices|plat|platinum|worth|value|market|cost|costs|sell|sells|buy|buys)\b",
     re.I,
 )
 
 _TIMING_RE = re.compile(
     r"\b("
-    r"good time|best time|when to buy|when to sell|when is a|when should|"
+    r"good time|best time|when to buy|when to sell|when should i (?:buy|sell)|"
     r"should i buy|should i sell|buy timing|sell timing"
     r")\b",
     re.I,
 )
+
+
+def _is_forecast_query(text: str) -> bool:
+    if _STRONG_FORECAST_RE.search(text):
+        return True
+    return bool(_CONTEXTUAL_FORECAST_RE.search(text) and _PRICE_CONTEXT_RE.search(text))
 
 _LIVE_MARKET_RE = re.compile(
     r"\b("
@@ -127,9 +151,13 @@ def _extract_item_query(message: str) -> str:
     return cleaned or text
 
 
+def is_recommendation_query(message: str) -> bool:
+    return bool(_RECOMMEND_RE.search((message or "").strip()))
+
+
 def _keyword_flags(text: str) -> dict[str, bool]:
     return {
-        "forecast": bool(_FORECAST_RE.search(text)),
+        "forecast": _is_forecast_query(text),
         "timing": bool(_TIMING_RE.search(text)),
         "live_market": bool(_LIVE_MARKET_RE.search(text)),
         "portfolio": bool(_PORTFOLIO_RE.search(text)),
@@ -247,20 +275,11 @@ def _classify_fallback(message: str, context: dict[str, Any]) -> RoutePlan:
     return RoutePlan(agent="market", item_query=item_query, reason="fallback_default_market")
 
 
-def _plan_from_llm_data(
-    data: dict[str, Any],
-    fallback_item_query: str,
-    context: dict[str, Any] | None = None,
-) -> RoutePlan:
-    agent = data.get("primary_agent", "market")
-    if agent not in {"market", "knowledge", "forecasting"}:
-        agent = "forecasting" if data.get("needs_forecast") else "market"
-    if data.get("needs_forecast"):
-        agent = "forecasting"
+def _plan_from_llm_data(data: dict[str, Any], fallback_item_query: str) -> RoutePlan:
+    # The classifier only decides forecasting-vs-not; Market is the default and
+    # the orchestrator handles the Knowledge fallback on its own.
+    agent = "forecasting" if data.get("needs_forecast") else "market"
     reason = str(data.get("reason") or "llm_classifier")
-    if agent == "knowledge" and context and context.get("wfm_matches"):
-        agent = "market"
-        reason = "llm_knowledge_overridden_wfm_hit"
     item_query = str(data.get("item_query") or fallback_item_query or "").strip()
     return RoutePlan(agent=agent, item_query=item_query, reason=reason)
 
@@ -277,7 +296,9 @@ def classify(
     timing_hit = flags["timing"]
     portfolio_hit = flags["portfolio"]
 
-    if portfolio_hit and not forecast_hit and not timing_hit:
+    # Portfolio / trade-logging is checked before forecasting so phrases like
+    # "trade history" stay on Market instead of being pulled into Forecasting.
+    if portfolio_hit:
         return RoutePlan(agent="market", reason="portfolio")
 
     if timing_hit or forecast_hit:
@@ -295,4 +316,4 @@ def classify(
     if plan is None:
         return _classify_fallback(text, context)
 
-    return _plan_from_llm_data(plan, item_query, context)
+    return _plan_from_llm_data(plan, item_query)

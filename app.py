@@ -275,11 +275,12 @@ def _render_chat_message(msg: dict) -> None:
             st.caption("⚠️ Guardrail flagged")
 
 
-def render_chat() -> None:
+def render_chat_history() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    history = st.container(height=520)
+    # Base height is a fallback; CSS stretches this container to fill the viewport.
+    history = st.container(height=600)
     with history:
         for msg in st.session_state.messages:
             _render_chat_message(msg)
@@ -302,6 +303,9 @@ def render_chat() -> None:
         st.session_state._awaiting_response = False
         st.rerun()
 
+
+def handle_chat_input() -> None:
+    """Top-level chat input — Streamlit docks this to the viewport bottom."""
     if prompt := st.chat_input("Ask about prices, items, portfolio, forecasts..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.session_state._awaiting_response = True
@@ -315,18 +319,19 @@ st.set_page_config(page_title="Warframe AI", page_icon="⚔️", layout="wide")
 st.markdown(
     """
     <style>
-    /* Keep chat input anchored to the bottom of the center column */
-    div[data-testid="column"]:has(div[data-testid="stChatInput"]) {
-        display: flex;
-        flex-direction: column;
+    /* App-shell layout: the page itself does not scroll. Each column's bounded
+       container (chat history + item explorer) fills the viewport and scrolls
+       independently, so the "Ask the Agent" / "Item Explorer" headers stay fixed.
+       Streamlit docks the top-level chat input to the viewport bottom. */
+    section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"] {
+        height: calc(100vh - 13rem) !important;
     }
-    div[data-testid="column"]:has(div[data-testid="stChatInput"]) div[data-testid="stChatInput"] {
-        margin-top: auto;
+    /* Keep each column header pinned above its scrolling body. */
+    section[data-testid="stMain"] div[data-testid="column"] > div > div[data-testid="stElementContainer"]:has(h3) {
         position: sticky;
-        bottom: 0;
+        top: 0;
+        z-index: 50;
         background: var(--background-color, #0e1117);
-        z-index: 999;
-        padding-top: 0.5rem;
     }
     </style>
     """,
@@ -396,8 +401,13 @@ chat_col, explorer_col = st.columns([3, 2], gap="large")
 
 with chat_col:
     st.subheader("🤖 Ask the Agent")
-    render_chat()
+    render_chat_history()
 
 with explorer_col:
     st.subheader("🔍 Item Explorer")
-    render_item_explorer()
+    # Bounded container so the explorer scrolls independently of the chat.
+    with st.container(height=600):
+        render_item_explorer()
+
+# Top-level input so Streamlit docks it to the bottom of the viewport.
+handle_chat_input()

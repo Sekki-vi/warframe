@@ -1310,6 +1310,34 @@ def build_sources(hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
 _NOT_FOUND_REPLY = "No matching items were found in the knowledge corpus."
 
 
+def _generate_reply(
+    message: str,
+    hits: list[dict[str, Any]],
+    history: list[dict[str, str]],
+) -> str:
+    """Generate an Ordis-persona narrative grounded in the retrieved context."""
+    cfg, client = _get_client()
+    context = _build_context(hits)
+    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for turn in _trim_history(history, cfg["max_history"]):
+        role = turn.get("role")
+        content = turn.get("content")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": str(content)})
+    messages.append(
+        {
+            "role": "user",
+            "content": f"Knowledge context:\n{context}\n\nOperator's question: {message}",
+        }
+    )
+    resp = client.chat.completions.create(
+        model=cfg["chat_model"],
+        messages=messages,
+        temperature=cfg["temperature"],
+    )
+    return (resp.choices[0].message.content or "").strip()
+
+
 def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[str, Any]:
     history = list(history or [])
     hits, _intent = retrieve(message)
@@ -1320,7 +1348,12 @@ def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[st
     sources = build_sources(hits)
 
     if hits:
-        reply = ""
+        try:
+            reply = _generate_reply(message, hits, history)
+        except Exception:
+            reply = ""
+        if not reply:
+            reply = (hits[0].get("description") or "").strip() or _NOT_FOUND_REPLY
     else:
         reply = _NOT_FOUND_REPLY
 
