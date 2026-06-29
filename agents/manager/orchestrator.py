@@ -194,25 +194,35 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
     if plan.agent == "forecasting" and not needs_multi:
         chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
         history = _forecast_history_for_query(session_id, conversation, resolved_message)
-        result = ask_market_question(resolved_message, history=history, base_url=chart_base)
-        session.save_forecast_history(session_id, result.get("history") or history)
-        response = disclaimer + (result.get("answer") or "")
+        try:
+            result = ask_market_question(resolved_message, history=history, base_url=chart_base)
+            session.save_forecast_history(session_id, result.get("history") or history)
+            response = disclaimer + (result.get("answer") or "")
+        except Exception as exc:
+            response = (
+                f"I couldn't find market data for that item. "
+                f"Try being more specific — e.g. \"Saryn Prime Set\" instead of \"Saryn\". "
+                f"({exc})"
+            )
+            result = {}
         agents_called = ["forecasting"]
         record_agent = "forecasting"
 
     elif needs_multi:
         # Call market for live prices/orders + forecasting for trend/investment analysis
         chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
-        # Ask market only about live current data so it doesn't deflect to forecasting
         live_prompt = f"Show me the current live buy/sell orders and price for: {resolved_message}"
         market_result = market_answer(live_prompt, session_id=session_id, history=conversation)
         f_history = _forecast_history_for_query(session_id, conversation, resolved_message)
-        f_result = ask_market_question(resolved_message, history=f_history, base_url=chart_base)
-        session.save_forecast_history(session_id, f_result.get("history") or f_history)
+        try:
+            f_result = ask_market_question(resolved_message, history=f_history, base_url=chart_base)
+            session.save_forecast_history(session_id, f_result.get("history") or f_history)
+            forecast_part = (f_result.get("answer") or "").strip()
+        except Exception as exc:
+            f_result = {}
+            forecast_part = f"Forecast unavailable: try specifying the full item name (e.g. \"Volt Prime Set\"). ({exc})"
 
         market_part = (market_result.get("response") or "").strip()
-        forecast_part = (f_result.get("answer") or "").strip()
-
         parts = []
         if market_part:
             parts.append(f"**Live Market:**\n{market_part}")
