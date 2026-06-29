@@ -22,7 +22,9 @@ _MULTI_LIVE_RE = re.compile(
 )
 _MULTI_FORECAST_RE = re.compile(
     r"\b(forecast|predict|next\s+week|next\s+month|invest|investment|"
-    r"price\s+in\s+\d|will\s+(it|the\s+price)|going\s+up|going\s+down|trend)\b",
+    r"price\s+in\s+\d|will\s+(it|the\s+price)|going\s+up|going\s+down|trend|"
+    r"worth\s+(getting|buying|it)|should\s+i\s+buy|should\s+i\s+wait|"
+    r"good\s+(investment|deal|time)|buy\s+or\s+wait)\b",
     re.I,
 )
 

@@ -30,7 +30,10 @@ Hard constraints (must respect):
 - needs_forecast true → primary_agent forecasting
 - Live sell/buy orders, sellers, platinum listings, cheapest price → market (needs_forecast false)
 - Portfolio / trade logging → market
+- ANY phrasing that means "show me what I own/bought/have" → market (portfolio). Examples: "what I got", "my loot", "what do I have", "items I bought", "my stuff", "my collection", "what have I been buying", "show me my things", "give me my list" — all → market
 - Forecast/timing keywords in signals with forecast or timing true are handled upstream; still set needs_forecast if the user wants trends or timing analysis
+- Investment/worth questions ("is it worth getting", "good deal", "should I buy or wait") → needs_forecast true → forecasting
+- Typos and casual language (yo, nah, u, ur, wut, wat) are fine — understand the intent, do not reject
 
 Follow-up questions:
 - Use recent_conversation and session_meta.last_item to resolve pronouns (she, he, it, they) and omitted item names
