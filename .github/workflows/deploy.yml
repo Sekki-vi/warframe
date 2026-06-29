@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
 
+env:
+  SERVER_USER: azureuser
+  APP_DIR: /home/azureuser/warframe
+  MANAGER_PORT: 8602
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,12 +17,12 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VOID_RIG_IP }}
-          username: ${{ secrets.VOID_RIG_USER }}
+          username: azureuser
           key: ${{ secrets.VOID_RIG_SSH_KEY }}
           port: 22
           script: |
             set -e
-            cd /home/${{ secrets.VOID_RIG_USER }}/warframe
+            cd /home/azureuser/warframe
 
             echo "→ Pulling latest code..."
             git pull origin main
@@ -30,6 +35,6 @@ jobs:
             sudo systemctl restart warframe-ui
 
             echo "→ Health check..."
-            sleep 3
+            sleep 4
             curl -sf http://localhost:8602/health | python3 -c "import sys,json; d=json.load(sys.stdin); print('Health OK:', d['status'])"
             echo "✓ Deploy complete."
