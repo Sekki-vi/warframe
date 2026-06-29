@@ -26,11 +26,22 @@ def _display_response(text: str, plot_url: str | None) -> str:
     return text
 
 
+def _rewrite_chart_url(plot_url: str) -> str:
+    """Replace server-side host in chart URL with BACKEND_URL so the browser can reach it."""
+    # plot_url = "http://<server_host>:<port>/charts/abc.png"
+    # Rewrite to    "<BACKEND_URL>/charts/abc.png"
+    match = re.search(r"/charts/.+", plot_url)
+    if match:
+        return BACKEND_URL.rstrip("/") + match.group()
+    return plot_url
+
+
 def render_forecast_chart(plot_url: str | None, label: str = "Forecast chart") -> None:
     if not plot_url:
         return
-    with st.expander(label, expanded=False):
-        st.image(plot_url, use_container_width=True)
+    accessible_url = _rewrite_chart_url(plot_url)
+    with st.expander(label, expanded=True):
+        st.image(accessible_url, use_container_width=True)
 
 
 # ── HTTP helpers ──────────────────────────────────────────────────────────────
