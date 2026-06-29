@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -53,6 +55,17 @@ def forecast(
     }
 
 
+def _parse_dates(datetimes: list[str]) -> list[datetime] | None:
+    """Parse ISO datetime strings to datetime objects. Returns None if any fail."""
+    parsed = []
+    for s in datetimes:
+        try:
+            parsed.append(datetime.fromisoformat(s.replace("Z", "+00:00")))
+        except Exception:
+            return None
+    return parsed
+
+
 def make_plot(
     series,
     fc,
@@ -60,11 +73,28 @@ def make_plot(
     title,
     out_path: str | None = None,
     history_label: str = "History (extracted)",
+    datetimes: list[str] | None = None,
+    timeframe: str = "90days",
 ) -> bytes:
     n = len(series)
-    hist_x = np.arange(n)
     h = len(fc["mean"])
-    fc_x = np.arange(n - 1, n - 1 + h + 1)
+
+    # Build x-axis: real dates if available, else sequential index
+    hist_dates = _parse_dates(datetimes) if datetimes and len(datetimes) == n else None
+    use_dates = hist_dates is not None
+
+    if use_dates:
+        # Infer step size from history to project forecast dates
+        if n >= 2:
+            avg_step = (hist_dates[-1] - hist_dates[0]) / (n - 1)
+        else:
+            avg_step = timedelta(days=1)
+        fc_dates = [hist_dates[-1] + avg_step * i for i in range(h + 1)]
+        hist_x = hist_dates
+        fc_x = fc_dates
+    else:
+        hist_x = list(range(n))
+        fc_x = list(range(n - 1, n - 1 + h + 1))
 
     def join(arr):
         return np.concatenate([[fc["last"]], arr])
@@ -73,7 +103,7 @@ def make_plot(
     fig, ax = plt.subplots(figsize=(12, 6))
 
     ax.plot(hist_x, series, color="#1f3a5f", lw=2, label=history_label)
-    ax.scatter([n - 1], [fc["last"]], color="#1f3a5f", s=40, zorder=5)
+    ax.scatter([hist_x[-1]], [fc["last"]], color="#1f3a5f", s=40, zorder=5)
     ax.fill_between(fc_x, join(fc["lo95"]), join(fc["hi95"]),
                     color="#4c78a8", alpha=0.18, label="95% confidence interval")
     ax.fill_between(fc_x, join(fc["lo80"]), join(fc["hi80"]),
@@ -81,12 +111,20 @@ def make_plot(
     ax.plot(fc_x, join(fc["mean"]), color="#d1495b", lw=2, ls="--",
             label="Forecast (mean path)")
 
-    ax.axvline(n - 1, color="gray", ls=":", lw=1)
+    ax.axvline(hist_x[-1], color="gray", ls=":", lw=1)
     ax.set_title(title, fontsize=14, weight="bold")
-    ax.set_xlabel("Time step (index)")
-    ax.set_ylabel(f"Value ({unit_label})")
+
+    if use_dates:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        fig.autofmt_xdate(rotation=30)
+        ax.set_xlabel("Date")
+    else:
+        ax.set_xlabel("Time step (index)")
+
+    ax.set_ylabel(f"Price ({unit_label})")
     ax.legend(loc="best", framealpha=0.9)
-    ax.annotate(f"{fc['mean'][-1]:.2f}", xy=(fc_x[-1], fc["mean"][-1]),
+    ax.annotate(f"{fc['mean'][-1]:.2f}p", xy=(fc_x[-1], fc["mean"][-1]),
                 xytext=(8, 0), textcoords="offset points",
                 color="#d1495b", weight="bold", va="center")
 

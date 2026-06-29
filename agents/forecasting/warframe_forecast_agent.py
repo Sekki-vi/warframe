@@ -7,6 +7,8 @@ import json
 import os
 import re
 import time
+
+import numpy as np
 from difflib import get_close_matches
 from functools import lru_cache
 from typing import Any
@@ -206,6 +208,15 @@ def _load_item_series(
     raw_series, market_points = _extract_series(rows, price_field)
     series = downsample(raw_series, points)
     item_name = item.get("item_name", url_name.replace("_", " ").title())
+
+    # Downsample datetimes to match the series length
+    all_datetimes = [p["datetime"] for p in market_points if p.get("datetime")]
+    if len(all_datetimes) == len(raw_series) and len(raw_series) > points:
+        idx = np.linspace(0, len(all_datetimes) - 1, points).round().astype(int)
+        series_datetimes = [all_datetimes[i] for i in idx]
+    else:
+        series_datetimes = all_datetimes[:len(series)]
+
     return {
         "item": {
             "item_name": item_name,
@@ -220,6 +231,7 @@ def _load_item_series(
         },
         "raw_series": raw_series,
         "series": series,
+        "series_datetimes": series_datetimes,
         "market_points": market_points,
         "history_stats": _series_stats(raw_series),
     }
@@ -254,6 +266,8 @@ def forecast_item(
         "platinum",
         f"{item_name} {metric_label} forecast",
         history_label=f"{metric_label.title()} history",
+        datetimes=loaded.get("series_datetimes"),
+        timeframe=timeframe,
     )
 
     stats = {
