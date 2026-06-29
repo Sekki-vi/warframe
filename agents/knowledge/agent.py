@@ -1309,6 +1309,12 @@ def build_sources(hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 _NOT_FOUND_REPLY = "No matching items were found in the knowledge corpus."
 
+# A source card is only meaningful when the query literally/structurally names a
+# corpus item (exact name, alias, or taxonomy browse). A semantic-only fallback
+# means the nearest item is not actually the subject — e.g. "who is Ordis" matches
+# an unrelated quest — so we return text without a card.
+_CARD_WORTHY_SOURCES = frozenset({"exact", "keyword", "taxonomy"})
+
 
 def _generate_reply(
     message: str,
@@ -1343,9 +1349,13 @@ def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[st
     hits, _intent = retrieve(message)
     if hits:
         hits = [enrich_hit_drops(hits[0])]
-    resolved_slug = hits[0].get("slug") or hits[0].get("doc_id") if hits else ""
-    equipment_class = hits[0].get("equipment_class") if hits else ""
-    sources = build_sources(hits)
+
+    # Attach a card (and its tier/slug) only when the match is a confident,
+    # literal one; a semantic-only fallback is not the real subject.
+    card_worthy = bool(hits) and hits[0].get("source") in _CARD_WORTHY_SOURCES
+    resolved_slug = (hits[0].get("slug") or hits[0].get("doc_id")) if card_worthy else ""
+    equipment_class = hits[0].get("equipment_class") if card_worthy else ""
+    sources = build_sources(hits) if card_worthy else []
 
     if hits:
         try:
