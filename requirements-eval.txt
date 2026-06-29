@@ -1,0 +1,4 @@
+ragas>=0.2
+datasets
+langchain-openai
+eval-type-backport

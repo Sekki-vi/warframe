@@ -245,68 +245,93 @@ def render_item_explorer() -> None:
                 st.rerun()
 
 
+def _assistant_message_from_response(res: dict) -> dict:
+    response = res.get("response", str(res))
+    plot_url = res.get("plot_url")
+    return {
+        "role": "assistant",
+        "content": response,
+        "agents_called": res.get("agents_called", []),
+        "sources": res.get("sources", []),
+        "plot_url": plot_url,
+        "chart_label": res.get("chart_label", "Forecast chart") if plot_url else None,
+        "guardrail_flagged": res.get("guardrail_flagged", False),
+    }
+
+
+def _render_chat_message(msg: dict) -> None:
+    with st.chat_message(msg["role"]):
+        plot_url = msg.get("plot_url")
+        content = _display_response(msg["content"], plot_url)
+        if content.strip():
+            st.markdown(content)
+        render_forecast_chart(plot_url, msg.get("chart_label", "Forecast chart"))
+        if msg.get("sources"):
+            render_source_cards(msg["sources"])
+        if msg.get("agents_called"):
+            agents_str = " + ".join(f"**{a.capitalize()} Agent**" for a in msg["agents_called"])
+            st.caption(f"via {agents_str}")
+        if msg.get("guardrail_flagged"):
+            st.caption("⚠️ Guardrail flagged")
+
+
 def render_chat() -> None:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            plot_url = msg.get("plot_url")
-            st.markdown(_display_response(msg["content"], plot_url))
-            render_forecast_chart(plot_url, msg.get("chart_label", "Forecast chart"))
-            if msg.get("sources"):
-                render_source_cards(msg["sources"])
-            if msg.get("agents_called"):
-                agents_str = " + ".join(f"**{a.capitalize()} Agent**" for a in msg["agents_called"])
-                st.caption(f"via {agents_str}")
+    history = st.container(height=520)
+    with history:
+        for msg in st.session_state.messages:
+            _render_chat_message(msg)
+
+    if st.session_state.get("_awaiting_response"):
+        prompt = st.session_state.messages[-1]["content"]
+        with st.spinner("Thinking..."):
+            res = api_post("/query", {
+                "message":    prompt,
+                "user_id":    st.session_state.get("uid", "player_001"),
+                "session_id": st.session_state.get("sid", "session_001"),
+            })
+
+        if res and "error" not in res:
+            st.session_state.messages.append(_assistant_message_from_response(res))
+        else:
+            err = res.get("error", "Unknown error") if res else "No response"
+            st.session_state.messages.append({"role": "assistant", "content": err})
+
+        st.session_state._awaiting_response = False
+        st.rerun()
 
     if prompt := st.chat_input("Ask about prices, items, portfolio, forecasts..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                res = api_post("/query", {
-                    "message":    prompt,
-                    "user_id":    st.session_state.get("uid", "player_001"),
-                    "session_id": st.session_state.get("sid", "session_001"),
-                })
-
-            if res and "error" not in res:
-                response = res.get("response", str(res))
-                agents_called = res.get("agents_called", [])
-                sources = res.get("sources", [])
-                flagged = res.get("guardrail_flagged", False)
-                plot_url = res.get("plot_url")
-                chart_label = res.get("chart_label", "Forecast chart")
-
-                st.markdown(_display_response(response, plot_url))
-                render_forecast_chart(plot_url, chart_label)
-                if sources:
-                    render_source_cards(sources)
-                if agents_called:
-                    st.caption("via " + " + ".join(f"**{a.capitalize()} Agent**" for a in agents_called))
-                if flagged:
-                    st.caption("⚠️ Guardrail flagged")
-
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": response,
-                    "agents_called": agents_called,
-                    "sources": sources,
-                    "plot_url": plot_url,
-                    "chart_label": chart_label if plot_url else None,
-                })
-            else:
-                err = res.get("error", "Unknown error") if res else "No response"
-                st.error(err)
-                st.session_state.messages.append({"role": "assistant", "content": err})
+        st.session_state._awaiting_response = True
+        st.rerun()
 
 
 # ── Page config ───────────────────────────────────────────────────────────────
 
 st.set_page_config(page_title="Warframe AI", page_icon="⚔️", layout="wide")
+
+st.markdown(
+    """
+    <style>
+    /* Keep chat input anchored to the bottom of the center column */
+    div[data-testid="column"]:has(div[data-testid="stChatInput"]) {
+        display: flex;
+        flex-direction: column;
+    }
+    div[data-testid="column"]:has(div[data-testid="stChatInput"]) div[data-testid="stChatInput"] {
+        margin-top: auto;
+        position: sticky;
+        bottom: 0;
+        background: var(--background-color, #0e1117);
+        z-index: 999;
+        padding-top: 0.5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
@@ -356,6 +381,7 @@ with st.sidebar:
     c1, c2 = st.columns(2)
     if c1.button("Clear Chat", use_container_width=True):
         st.session_state.messages = []
+        st.session_state._awaiting_response = False
         try:
             requests.delete(f"{BACKEND_URL}/session/{session_id}", timeout=10)
         except Exception:

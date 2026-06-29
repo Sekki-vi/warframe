@@ -106,7 +106,19 @@ def _dispatch(name: str, args: dict[str, Any], session_id: str) -> str:
     return f"Unknown tool: {name}"
 
 
-def _run_agent(message: str, session_id: str) -> str:
+def _seed_session_from_history(session_id: str, history: list[dict[str, str]] | None) -> None:
+    if session_id in _sessions:
+        return
+    _sessions[session_id] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for turn in history or []:
+        role = turn.get("role")
+        content = turn.get("content")
+        if role in ("user", "assistant") and content:
+            _sessions[session_id].append({"role": role, "content": str(content)})
+
+
+def _run_agent(message: str, session_id: str, history: list[dict[str, str]] | None = None) -> str:
+    _seed_session_from_history(session_id, history)
     if session_id not in _sessions:
         _sessions[session_id] = [{"role": "system", "content": SYSTEM_PROMPT}]
     _meta(session_id).update({"tier": "", "resolved_slug": ""})
@@ -135,9 +147,13 @@ def clear_session(session_id: str) -> None:
     _session_meta.pop(session_id, None)
 
 
-def answer(message: str, session_id: str = "default") -> dict[str, Any]:
+def answer(
+    message: str,
+    session_id: str = "default",
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """Natural-language market query (orders, prices, portfolio)."""
-    reply = _run_agent(message, session_id)
+    reply = _run_agent(message, session_id, history=history)
     meta = _meta(session_id)
     out: dict[str, Any] = {"response": reply, "session_id": session_id}
     if meta.get("tier"):

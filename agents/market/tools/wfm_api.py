@@ -36,6 +36,30 @@ def search_item(query: str) -> list[dict]:
     ][:5]
 
 
+def find_items_in_text(text: str) -> list[dict]:
+    """Return WFM items whose name appears in text, or match via phrase search (longest first)."""
+    text_lower = text.lower().strip()
+    if not text_lower:
+        return []
+    matches: list[dict] = [
+        i for i in _get_all_items()
+        if i["name"].lower() in text_lower
+    ]
+    seen_slugs = {m["slug"] for m in matches}
+    words = text_lower.split()
+    for size in range(min(4, len(words)), 0, -1):
+        for start in range(len(words) - size + 1):
+            phrase = " ".join(words[start : start + size])
+            if len(phrase) < 4:
+                continue
+            for item in search_item(phrase):
+                if item["slug"] not in seen_slugs:
+                    matches.append(item)
+                    seen_slugs.add(item["slug"])
+    matches.sort(key=lambda i: len(i["name"]), reverse=True)
+    return matches[:5]
+
+
 def get_item_details(item_slug: str) -> dict:
     """Full item info: name, image, description, tags, mastery rank, ducats, wiki."""
     resp = requests.get(f"{BASE_V2}/items/{item_slug}", headers=_HEADERS, timeout=10)

@@ -1273,16 +1273,6 @@ def _build_context(hits: list[dict[str, Any]]) -> str:
     return "\n".join(parts_out)
 
 
-def _is_price_query(query: str) -> bool:
-    q = query.lower()
-    return bool(
-        re.search(
-            r"\b(price|platinum|cost|how much|sell|buy|seller|trade|market|who is selling)\b",
-            q,
-        )
-    )
-
-
 def retrieve(query: str) -> tuple[list[dict[str, Any]], QueryIntent]:
     intent = parse_query_intent(query)
     keyword_hits = keyword_search(query, intent)
@@ -1317,29 +1307,29 @@ def build_sources(hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
     }]
 
 
+_NOT_FOUND_REPLY = "No matching items were found in the knowledge corpus."
+
+
 def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[str, Any]:
-    cfg, client = _get_client()
     history = list(history or [])
-    if _is_price_query(message):
-        reply = (
-            "Operator, pricing and seller information is routed through the market subsystem, "
-            "which is not connected to this knowledge interface yet. "
-            "I can describe non-tradable items from my warframe-items corpus."
-        )
-        history.append({"role": "user", "content": message})
-        history.append({"role": "assistant", "content": reply})
-        return {"reply": reply, "sources": [], "history": history}
     hits, _intent = retrieve(message)
     if hits:
         hits = [enrich_hit_drops(hits[0])]
     resolved_slug = hits[0].get("slug") or hits[0].get("doc_id") if hits else ""
     equipment_class = hits[0].get("equipment_class") if hits else ""
-    context = _build_context(hits)
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(_trim_history(history, cfg["max_history"]))
-    messages.append({"role": "user", "content": f"Knowledge context:\n{context}\n\nOperator query: {message}"})
-    response = client.chat.completions.create(model=cfg["chat_model"], messages=messages, temperature=cfg["temperature"])
-    reply = response.choices[0].message.content or ""
+    sources = build_sources(hits)
+
+    if hits:
+        reply = ""
+    else:
+        reply = _NOT_FOUND_REPLY
+
     history.append({"role": "user", "content": message})
     history.append({"role": "assistant", "content": reply})
-    return {"reply": reply, "sources": build_sources(hits), "history": history, "resolved_slug": resolved_slug, "equipment_class": equipment_class}
+    return {
+        "reply": reply,
+        "sources": sources,
+        "history": history,
+        "resolved_slug": resolved_slug,
+        "equipment_class": equipment_class,
+    }

@@ -6,6 +6,9 @@ from typing import Any
 
 def format_knowledge_reply(result: dict[str, Any]) -> str:
     """Return Ordis reply text only; source cards are rendered separately from sources."""
+    sources = result.get("sources") or []
+    if sources:
+        return ""
     return (result.get("reply") or "").strip()
 
 
