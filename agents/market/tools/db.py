@@ -13,14 +13,62 @@ def _conn() -> sqlite3.Connection:
     return con
 
 
+def _normalize_slug(item_slug: str) -> str:
+    """Canonical Warframe Market slug form: lowercase with underscores.
+
+    Holdings were historically stored with hyphenated slugs (e.g.
+    "volt-prime-set") which never matched the underscore form WFM and the sell
+    flow use ("volt_prime_set"), so they couldn't be sold.
+    """
+    return (item_slug or "").strip().lower().replace("-", "_")
+
+
+def _migrate_legacy_slugs(con: sqlite3.Connection) -> None:
+    """Normalize any legacy non-canonical slugs in place (idempotent)."""
+    con.execute("UPDATE trades SET item_slug = REPLACE(LOWER(item_slug), '-', '_')")
+    for r in con.execute(
+        "SELECT id, item_slug, quantity, avg_buy_price FROM holdings"
+    ).fetchall():
+        canon = _normalize_slug(r["item_slug"])
+        if canon == r["item_slug"]:
+            continue
+        dup = con.execute(
+            "SELECT id, quantity, avg_buy_price FROM holdings WHERE item_slug = ? AND id <> ?",
+            (canon, r["id"]),
+        ).fetchone()
+        if dup:
+            # A canonical row already exists — merge the legacy one into it.
+            total = dup["quantity"] + r["quantity"]
+            avg = (
+                round(
+                    (dup["avg_buy_price"] * dup["quantity"] + r["avg_buy_price"] * r["quantity"])
+                    / total,
+                    2,
+                )
+                if total
+                else r["avg_buy_price"]
+            )
+            con.execute(
+                "UPDATE holdings SET quantity = ?, avg_buy_price = ? WHERE id = ?",
+                (total, avg, dup["id"]),
+            )
+            con.execute("DELETE FROM holdings WHERE id = ?", (r["id"],))
+        else:
+            con.execute(
+                "UPDATE holdings SET item_slug = ? WHERE id = ?", (canon, r["id"])
+            )
+
+
 def init_db() -> None:
-    """Create tables if they don't exist."""
+    """Create tables if they don't exist and normalize any legacy slugs."""
     with _conn() as con:
         con.executescript(SCHEMA_PATH.read_text())
+        _migrate_legacy_slugs(con)
 
 
 def add_holding(item_slug: str, item_name: str, quantity: int, price_per_unit: float) -> str:
     """Add or update a holding. Logs a buy trade."""
+    item_slug = _normalize_slug(item_slug)
     with _conn() as con:
         existing = con.execute(
             "SELECT * FROM holdings WHERE item_slug = ?", (item_slug,)
@@ -52,6 +100,7 @@ def add_holding(item_slug: str, item_name: str, quantity: int, price_per_unit: f
 
 def sell_holding(item_slug: str, quantity: int, price_per_unit: float) -> str:
     """Reduce or remove a holding. Logs a sell trade. Returns P&L."""
+    item_slug = _normalize_slug(item_slug)
     with _conn() as con:
         existing = con.execute(
             "SELECT * FROM holdings WHERE item_slug = ?", (item_slug,)
@@ -89,6 +138,7 @@ def sell_holding(item_slug: str, quantity: int, price_per_unit: float) -> str:
 
 def remove_holding(item_slug: str) -> str:
     """Delete a holding outright without logging a sell trade."""
+    item_slug = _normalize_slug(item_slug)
     with _conn() as con:
         existing = con.execute(
             "SELECT item_name FROM holdings WHERE item_slug = ?", (item_slug,)
