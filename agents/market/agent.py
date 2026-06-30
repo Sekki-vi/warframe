@@ -23,39 +23,35 @@ _session_meta: dict[str, dict[str, str]] = {}
 _client: OpenAI | None = None
 _db_ready = False
 
-SYSTEM_PROMPT = """You are a Warframe Market trading sub-agent in a multi-agent pipeline.
-Primary scope: live buy/sell orders, current prices, seller activity (are they in-game),
-item tiers, portfolio management, and trading recommendations.
-You do NOT handle forecasting or price history — that is the Forecasting Agent's job.
+SYSTEM_PROMPT = """You are the Warframe Market trading sub-agent.
+Scope: live buy/sell orders, prices, seller activity (in-game status), item tiers,
+portfolio, and trading recommendations. Forecasting/price-history is another agent's job.
+Currency: platinum (p). Be concise; include seller active status when showing orders.
 
-Use your own Warframe knowledge to identify items and make recommendations. For example
-"recommend a toxic frame" -> Saryn; "a good tank frame" -> Rhino or Inaros; "best beginner
-shotgun" -> Hek. Name the best-fitting tradable item, then resolve it with search_item and
-add its tier and current price when helpful. NEVER answer a recommendation, "which item…",
-or "what's a good…" question with "I don't know" — always pick a concrete item and explain
-briefly. When the user asks about item quality or tier, call lookup_tier after resolving the slug.
-Return structured, concise answers. Always include seller active status when showing orders.
-Currency: platinum (p).
+Recommendations: use your own Warframe knowledge to name the best-fitting tradable item
+(e.g. toxic frame -> Saryn, tank -> Rhino/Inaros, beginner shotgun -> Hek), then resolve it
+with search_item and add tier/price. Never answer a "recommend / which / what's a good"
+question with "I don't know" — pick a concrete item.
 
-If a question asks about a Warframe's or weapon's lore, identity, background, abilities,
-passive, mechanics, quests, or where it drops — anything you would answer from general game
-knowledge rather than market data — you MUST call defer_to_knowledge (with a short reason)
-and NOT answer it yourself. This includes "who is X", "what is X", and "tell me about X".
-NEVER refuse, NEVER say you can't help or that the user should "consult another source" /
-"authoritative source" — if you cannot answer from market data or as a recommendation, call
-defer_to_knowledge instead of refusing. Making recommendations is NOT a deferral — answer those."""
+Out of scope: for lore, identity, abilities, mechanics, quests, or drop locations
+("who is X", "tell me about X", etc.) call defer_to_knowledge with a short reason and stop.
+Do not answer those yourself and never tell the user to consult another source."""
 
 TOOLS = [
-    {"type": "function", "function": {"name": "search_item", "description": "Search items by name. Returns slug + display name.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
-    {"type": "function", "function": {"name": "get_orders", "description": "Live top-5 buy/sell orders. Includes seller name, price, quantity, and active status.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
-    {"type": "function", "function": {"name": "get_item_details", "description": "Full item info: name, image_url, description, mastery rank, ducats, tags, vaulted.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
-    {"type": "function", "function": {"name": "lookup_tier", "description": "Overframe tier S–D for a tradable item slug.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
-    {"type": "function", "function": {"name": "add_holding", "description": "Log a purchase to portfolio.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}, "item_name": {"type": "string"}, "quantity": {"type": "integer"}, "price_per_unit": {"type": "number"}}, "required": ["item_slug", "item_name", "quantity", "price_per_unit"]}}},
-    {"type": "function", "function": {"name": "sell_holding", "description": "Log a sale from portfolio with P&L.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}, "quantity": {"type": "integer"}, "price_per_unit": {"type": "number"}}, "required": ["item_slug", "quantity", "price_per_unit"]}}},
-    {"type": "function", "function": {"name": "get_holdings", "description": "Return current portfolio holdings.", "parameters": {"type": "object", "properties": {}}}},
-    {"type": "function", "function": {"name": "get_trade_history", "description": "Return recent trade history.", "parameters": {"type": "object", "properties": {"limit": {"type": "integer"}}}}},
-    {"type": "function", "function": {"name": "defer_to_knowledge", "description": "Signal that the question is outside market/trading scope (lore, abilities, mechanics, quests, drop/farming locations) and must be answered by the Knowledge agent. Do not call any other tool when deferring.", "parameters": {"type": "object", "properties": {"reason": {"type": "string"}}, "required": ["reason"]}}},
+    {"type": "function", "function": {"name": "search_item", "description": "Find items by name; returns slug + name.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+    {"type": "function", "function": {"name": "get_orders", "description": "Top-5 live buy/sell orders (seller, price, qty, active).", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
+    {"type": "function", "function": {"name": "get_item_details", "description": "Item info: name, image, description, MR, ducats, tags, vaulted.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
+    {"type": "function", "function": {"name": "lookup_tier", "description": "Overframe tier S–D for an item slug.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}}, "required": ["item_slug"]}}},
+    {"type": "function", "function": {"name": "add_holding", "description": "Log a portfolio purchase.", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}, "item_name": {"type": "string"}, "quantity": {"type": "integer"}, "price_per_unit": {"type": "number"}}, "required": ["item_slug", "item_name", "quantity", "price_per_unit"]}}},
+    {"type": "function", "function": {"name": "sell_holding", "description": "Log a portfolio sale (with P&L).", "parameters": {"type": "object", "properties": {"item_slug": {"type": "string"}, "quantity": {"type": "integer"}, "price_per_unit": {"type": "number"}}, "required": ["item_slug", "quantity", "price_per_unit"]}}},
+    {"type": "function", "function": {"name": "get_holdings", "description": "Current portfolio holdings.", "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "get_trade_history", "description": "Recent trade history.", "parameters": {"type": "object", "properties": {"limit": {"type": "integer"}}}}},
+    {"type": "function", "function": {"name": "defer_to_knowledge", "description": "Defer an out-of-scope question (lore/abilities/quests/drops) to the Knowledge agent. Don't call other tools when deferring.", "parameters": {"type": "object", "properties": {"reason": {"type": "string"}}, "required": ["reason"]}}},
 ]
+
+# Cap how much prior conversation is replayed to the market model each call —
+# the tool-calling loop re-sends the whole message list on every round-trip.
+_MAX_MARKET_HISTORY_MSGS = 6
 
 
 def _ensure_db() -> None:
@@ -191,7 +187,11 @@ def _run_agent(message: str, session_id: str, history: list[dict[str, str]] | No
         {"tier": "", "resolved_slug": "", "item_name": "", "needs_knowledge": False}
     )
     _sessions[session_id].append({"role": "user", "content": message})
-    messages = list(_sessions[session_id])
+    # Replay only the system prompt + the most recent turns to keep prompt
+    # tokens bounded on long sessions (within-query tool messages are appended
+    # to `messages` below and are not capped).
+    history_msgs = _sessions[session_id]
+    messages = [history_msgs[0]] + history_msgs[1:][-_MAX_MARKET_HISTORY_MSGS:]
     client = _get_client()
     while True:
         resp = client.chat.completions.create(

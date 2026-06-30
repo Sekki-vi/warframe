@@ -108,6 +108,37 @@ _MARKET_DEFLECTION_RE = re.compile(
 )
 
 
+_LORE_INTENT_RE = re.compile(
+    r"\b(who\s+(is|are|was|were)|who'?s|tell me about|lore of|backstory|back\s?story|story of)\b",
+    re.I,
+)
+
+
+def _names_a_frame(message: str) -> bool:
+    try:
+        from agents.knowledge.agent import _frames_in_query, load_alias_index
+
+        return bool(_frames_in_query(message, load_alias_index()))
+    except Exception:
+        return False
+
+
+def _is_pure_lore_query(message: str) -> bool:
+    """True for an identity/lore question about a non-tradable subject (e.g.
+    "who is Ordis"). Market would only defer these to Knowledge, so we can skip
+    the Market round-trip entirely and save its tokens. Anything that names a
+    tradable item or a Warframe stays on the Market-first path."""
+    text = (message or "").strip()
+    if not _LORE_INTENT_RE.search(text):
+        return False
+    normalized = re.sub(r"[^\w\s'-]", " ", text).strip()
+    if find_items_in_text(normalized):
+        return False
+    if _names_a_frame(text):
+        return False
+    return True
+
+
 def _should_use_knowledge_backup(message: str, market_result: dict) -> bool:
     if is_recommendation_query(message):
         return False
@@ -254,6 +285,19 @@ def handle_query(message: str, user_id: str, session_id: str, debug: bool = Fals
         if market_result.get("tier"):
             agents_called.append("ranking")
         record_agent = "forecasting"
+
+    elif _is_pure_lore_query(message):
+        # Non-tradable lore/identity — skip the Market round-trip (it would only
+        # defer) and answer from Knowledge directly.
+        k_history = session.get_conversation(session_id)
+        k_result = enrich_response(knowledge_answer(resolved_message, history=k_history))
+        result = k_result
+        response = disclaimer + format_knowledge_reply(k_result)
+        sources = knowledge_sources(k_result)
+        agents_called = ["knowledge"]
+        if k_result.get("tier"):
+            agents_called.append("ranking")
+        record_agent = "knowledge"
 
     else:
         market_result = market_answer(
