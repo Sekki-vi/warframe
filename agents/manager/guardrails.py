@@ -76,9 +76,20 @@ def _get_client() -> OpenAI:
     return _scope_client
 
 
+_IDENTITY_INTENT_RE = re.compile(
+    r"\b(who\s+(is|are|was|were)|who'?s|tell me about|lore of|backstory|back\s?story|story of)\b",
+    re.I,
+)
+
+
 def _is_in_scope(text: str) -> bool:
     """Returns True if the message is about Warframe. Fast keyword check first, LLM fallback."""
     if _IN_SCOPE_RE.search(text):
+        return True
+    # Identity/lore questions ("who is X", "tell me about X") are the Knowledge
+    # agent's domain. Let it judge and answer (or decline) rather than pre-blocking
+    # unknown Warframe names here — the keyword list can't enumerate every name.
+    if _IDENTITY_INTENT_RE.search(text):
         return True
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
