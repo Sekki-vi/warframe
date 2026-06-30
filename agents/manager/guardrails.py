@@ -37,6 +37,10 @@ _IN_SCOPE_RE = re.compile(
     r"ivara|inaros|octavia|harrow|khora|wisp|gara|revenant|"
     r"baruuk|gauss|hildryn|protea|xaku|lavos|yareli|sevagoth|"
     r"gyre|caliban|voruna|citrine|dagath|qorvex|dante|"
+    # Warframe lore, characters, factions, and places (not tradable items, but
+    # still in-scope — the Knowledge agent answers these).
+    r"ordis|lotus|cephalon|teshin|tenno|operator|orbiter|"
+    r"grineer|corpus|infested|orokin|sentient|stalker|void|"
     r"what\s+(i\s+)?(got|have|own|bought)|my\s+(stuff|loot|items?|collection)"
     r")\b",
     re.I,
@@ -48,14 +52,18 @@ _SCOPE_CHECK_SYSTEM = """You guard a Warframe Market trading assistant. Respond 
 - Platinum prices, market orders, sellers, buyers
 - The user's portfolio, inventory, purchases, trades
 - Price forecasts or investment analysis for Warframe items
-- Anything related to the Warframe video game market
+- Warframe lore, characters, factions, NPCs, quests, locations, or story
+  (e.g. Ordis, the Lotus, Teshin, Cephalons, Tenno, Grineer, Corpus, the Void)
+- Anything related to the Warframe video game
 
 {"in_scope": false} if the message is about:
-- Real people (celebrities, politicians, historical figures)
-- Unrelated topics: coding, math, sports, crypto, news, entertainment
-- Requests to write poems, stories, or do tasks unrelated to Warframe trading
+- Real-world people (celebrities, politicians, historical figures) — NOT Warframe characters
+- Unrelated topics: coding, math, sports, crypto, news, real-world entertainment
+- Requests to write poems, stories, or do tasks unrelated to Warframe
 
-Be strict: when in doubt about a non-Warframe topic, return false.
+A character, faction, or place from the Warframe game is IN scope even if it is
+not a tradable item. When in doubt about whether something is part of the
+Warframe universe, return true; only return false for clearly off-topic requests.
 Never add explanations. JSON only."""
 
 _scope_client: OpenAI | None = None
