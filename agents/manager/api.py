@@ -127,6 +127,13 @@ def usage():
     return token_usage.snapshot()
 
 
+@app.delete("/usage")
+def reset_usage():
+    """Reset the cumulative token usage counters to zero."""
+    token_usage.reset()
+    return {"status": "ok"}
+
+
 @app.delete("/session/{session_id}")
 def clear_chat_session(session_id: str):
     session.clear_session(session_id)

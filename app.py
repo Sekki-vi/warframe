@@ -396,32 +396,18 @@ st.markdown(
 
 with st.sidebar:
     st.title("⚔️ Warframe AI")
-    st.caption(f"Backend: `{BACKEND_URL}`")
     st.divider()
 
-    st.subheader("👤 User")
-    user_id = st.text_input("User ID", value="player_001", key="uid")
-    session_id = st.text_input("Session ID", value="session_001", key="sid")
+    session_id = st.session_state.get("sid", "session_001")
 
-    user_info = api_get(f"/user/{user_id}")
-    if user_info and "auth_level" in user_info:
-        level = user_info["auth_level"]
-        label = user_info.get("label", "")
-        icons = {0: "🔵", 1: "🟢", 2: "🟡", 3: "🟠", 4: "🔴"}
-        st.markdown(f"**Level {level}** {icons.get(level, '⚪')} {label}")
-
-    st.divider()
-
-    st.subheader("🔌 Status")
-    health = api_get("/health")
-    if health:
-        st.success(f"Backend online — v{health.get('version', '?')}")
-        sub = health.get("sub_agents", {})
-        for name, info in sub.items():
-            icon = "🟢" if info["status"] == "ok" else "🔴"
-            st.caption(f"{icon} {name.capitalize()} Agent")
+    st.subheader("📦 Portfolio")
+    portfolio = api_get("/portfolio")
+    if portfolio and portfolio.get("holdings"):
+        for h in portfolio["holdings"]:
+            st.markdown(f"**{h['item_name']}**  \n{h['quantity']}x @ {h['avg_buy_price']}p avg")
+            st.divider()
     else:
-        st.error("Backend offline")
+        st.caption("No holdings yet.")
 
     st.divider()
 
@@ -442,17 +428,6 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("📦 Portfolio")
-    portfolio = api_get("/portfolio")
-    if portfolio and portfolio.get("holdings"):
-        for h in portfolio["holdings"]:
-            st.markdown(f"**{h['item_name']}**  \n{h['quantity']}x @ {h['avg_buy_price']}p avg")
-            st.divider()
-    else:
-        st.caption("No holdings yet.")
-
-    st.divider()
-
     st.subheader("💬 Session")
     c1, c2 = st.columns(2)
     if c1.button("Clear Chat", use_container_width=True):
@@ -464,6 +439,11 @@ with st.sidebar:
             pass
         st.rerun()
     if c2.button("Refresh", use_container_width=True):
+        # Reset cumulative token usage to zero.
+        try:
+            requests.delete(f"{BACKEND_URL}/usage", timeout=10)
+        except Exception:
+            pass
         st.rerun()
 
 # ── Main layout: chat center, Item Explorer right ─────────────────────────────
