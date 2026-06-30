@@ -1,12 +1,15 @@
 """Manager FastAPI server — HTTP facade for Streamlit UI and subagent orchestration."""
 from __future__ import annotations
 
+import logging
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from agents.common import usage as token_usage
 from agents.manager.auth import get_user_info
 from agents.manager.health import VERSION, health_payload
 from agents.manager.orchestrator import handle_query
@@ -24,6 +27,10 @@ from agents.forecasting.chart_store import CHARTS_DIR
 
 load_dotenv()
 
+# Surface routing/observability logs (warframe.router) at the app entry point.
+# Kept out of the library modules so the test suite stays quiet.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+
 app = FastAPI(title="Warframe Manager", version=VERSION)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -35,6 +42,7 @@ class QueryRequest(BaseModel):
     message: str
     user_id: str = "default"
     session_id: str = "default"
+    debug: bool = False
 
 
 class BuyRequest(BaseModel):
@@ -108,9 +116,15 @@ def portfolio_sell(req: SellRequest):
 @app.post("/query")
 def query(req: QueryRequest):
     try:
-        return handle_query(req.message, req.user_id, req.session_id)
+        return handle_query(req.message, req.user_id, req.session_id, debug=req.debug)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/usage")
+def usage():
+    """Cumulative LLM token usage since the server started (and a rough cost)."""
+    return token_usage.snapshot()
 
 
 @app.delete("/session/{session_id}")

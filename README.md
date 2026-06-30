@@ -13,10 +13,25 @@ Knowledge does **not** embed tier data. Ranking is a separate JSON lookup the ma
 
 ## Setup
 
-1. `pip install -r requirements.txt`
-2. Copy `.env.example` → `.env` and fill in API keys
-3. Processed knowledge data is in git under `data/processed/` (index + corpus). Build or refresh `data/cache/` locally (wfi lookup, wiki drops, etc.; not in git).
-4. Pinecone index `warframe`, namespace `warframe` must already be populated
+1. `python3.12 -m venv .venv && source .venv/bin/activate`
+2. `pip install -r requirements.txt` (versions are pinned for reproducibility)
+3. Copy `.env.example` → `.env` and fill in API keys
+4. Processed knowledge data is in git under `data/processed/` (index + corpus). Build or refresh `data/cache/` locally (wfi lookup, wiki drops, etc.; not in git).
+5. Pinecone index `warframe`, namespace `warframe` must already be populated
+
+### Tests & evals
+
+- Unit tests (offline, LLM mocked — run in CI via `.github/workflows/ci.yml`):
+  `python -m unittest discover -s agents -p "test_*.py"`
+- Routing regression eval (needs a running Manager + OpenAI key):
+  `BACKEND_URL=http://localhost:8602 python -m eval.routing_eval`
+
+### Token usage
+
+Every LLM call is recorded by `agents/common/usage.py`. The Manager returns
+per-request tokens in each `/query` response (`usage`) and cumulative totals at
+`GET /usage`; the Streamlit sidebar shows both. Pass `{"debug": true}` to `/query`
+to also get a `routing` breakdown (chosen agent + reason).
 
 ### Pinecone
 

@@ -1,9 +1,12 @@
 """Main query orchestration pipeline."""
 from __future__ import annotations
 
+import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 
+from agents.common import usage
 from agents.forecasting.ask_agent import ask_market_question, item_names_from_result
 from agents.knowledge.agent import answer as knowledge_answer
 from agents.manager.guardrails import check_outgoing, run_guardrails
@@ -13,6 +16,8 @@ from agents.manager import session
 from agents.market import answer as market_answer
 from agents.market.tools.wfm_api import find_items_in_text
 from agents.ranking.enrich import enrich_response
+
+logger = logging.getLogger("warframe.router")
 
 
 _MULTI_LIVE_RE = re.compile(
@@ -157,10 +162,12 @@ def _forecast_history_for_query(
     return prefix + forecast_history
 
 
-def handle_query(message: str, user_id: str, session_id: str) -> dict:
+def handle_query(message: str, user_id: str, session_id: str, debug: bool = False) -> dict:
     del user_id  # reserved for future auth
+    usage_before = usage.total_bucket()
     guard = run_guardrails(message)
     if guard.blocked:
+        logger.info("route session=%s blocked=guardrail", session_id)
         return {
             "response": guard.message,
             "agents_called": [],
@@ -209,18 +216,31 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         record_agent = "forecasting"
 
     elif needs_multi:
-        # Call market for live prices/orders + forecasting for trend/investment analysis
+        # Call market for live prices/orders + forecasting for trend/investment analysis.
+        # The two calls are independent, so run them concurrently to cut latency.
         chart_base = os.getenv("AGENT_PUBLIC_URL") or os.getenv("BACKEND_URL")
         live_prompt = f"Show me the current live buy/sell orders and price for: {resolved_message}"
-        market_result = market_answer(live_prompt, session_id=session_id, history=conversation)
         f_history = _forecast_history_for_query(session_id, conversation, resolved_message)
-        try:
-            f_result = ask_market_question(resolved_message, history=f_history, base_url=chart_base)
-            session.save_forecast_history(session_id, f_result.get("history") or f_history)
-            forecast_part = (f_result.get("answer") or "").strip()
-        except Exception as exc:
-            f_result = {}
-            forecast_part = f"Forecast unavailable: try specifying the full item name (e.g. \"Volt Prime Set\"). ({exc})"
+        # Market and forecasting are independent — run them concurrently. The
+        # forecast call can crash on ambiguous item names, so isolate its result.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            market_future = pool.submit(
+                market_answer, live_prompt, session_id=session_id, history=conversation
+            )
+            forecast_future = pool.submit(
+                ask_market_question, resolved_message, history=f_history, base_url=chart_base
+            )
+            market_result = market_future.result()
+            try:
+                f_result = forecast_future.result()
+                session.save_forecast_history(session_id, f_result.get("history") or f_history)
+                forecast_part = (f_result.get("answer") or "").strip()
+            except Exception as exc:
+                f_result = {}
+                forecast_part = (
+                    f"Forecast unavailable: try specifying the full item name "
+                    f"(e.g. \"Volt Prime Set\"). ({exc})"
+                )
 
         market_part = (market_result.get("response") or "").strip()
         parts = []
@@ -276,10 +296,22 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         item_slug=item_slug,
     )
 
+    req_usage = usage.delta_since(usage_before)
+    logger.info(
+        "route session=%s agent=%s reason=%s agents=%s item=%r tokens=%d",
+        session_id,
+        record_agent,
+        plan.reason,
+        "+".join(agents_called) or "-",
+        item_slug or item_name or "-",
+        req_usage.get("total", 0),
+    )
+
     out = {
         "response": response,
         "agents_called": agents_called if outgoing.ok else [],
         "guardrail_flagged": out_flagged,
+        "usage": req_usage,
     }
     if outgoing.ok and plan.agent == "forecasting" and result.get("plot_url"):
         out["plot_url"] = result["plot_url"]
@@ -287,4 +319,12 @@ def handle_query(message: str, user_id: str, session_id: str) -> dict:
         out["chart_label"] = f"Forecast chart — {', '.join(names)}" if names else "Forecast chart"
     if outgoing.ok and sources:
         out["sources"] = sources
+    if debug:
+        out["routing"] = {
+            "plan_agent": plan.agent,
+            "record_agent": record_agent,
+            "reason": plan.reason,
+            "needs_multi": needs_multi,
+            "item_query": plan.item_query,
+        }
     return out

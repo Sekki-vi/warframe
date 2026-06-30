@@ -14,6 +14,7 @@ import requests
 from openai import OpenAI
 from pinecone import Pinecone
 
+from agents.common import usage
 from config import CACHE_DIR, KNOWLEDGE_INDEX_JSON, get_agent_config
 from agents.knowledge.wfi_lookup import load_or_build_lookup, slugify
 
@@ -42,6 +43,22 @@ Rules:
 - Never mention prices, platinum, sellers, orders, or warframe.market listings.
 - If asked about prices or trading, explain that market data is handled by a separate subsystem.
 - Never invent item stats or names not present in the context.
+"""
+
+# Used when the subject is NOT a corpus item (a character, faction, location, or
+# lore topic like "who is Ordis"). Here there is no item context to ground on, so
+# Ordis answers from general Warframe knowledge instead of refusing.
+LORE_SYSTEM_PROMPT = """You are Ordis, a Cephalon knowledge subsystem aboard a Tenno's Orbiter.
+
+The Operator is asking about a Warframe character, faction, location, event, or
+lore topic that is NOT a tradable item, so no item record is available.
+
+Rules:
+- Answer concisely (2–4 sentences) from general Warframe knowledge, in character.
+- Address the Operator occasionally; stay formal and slightly dramatic.
+- Never mention prices, platinum, sellers, orders, or warframe.market listings.
+- If you are not certain of a detail, say so rather than inventing specifics.
+- Give a direct answer; do NOT end with a question or an offer to explain more.
 """
 
 _client: OpenAI | None = None
@@ -1235,7 +1252,9 @@ def _match_to_hit(match: Any) -> dict[str, Any]:
 def semantic_search(query: str, *, top_k: int | None = None) -> list[dict[str, Any]]:
     cfg, client, index = _clients()
     k = top_k if top_k is not None else cfg["top_k"]
-    embedding = client.embeddings.create(model=cfg["embed_model"], input=[query]).data[0].embedding
+    embed_resp = client.embeddings.create(model=cfg["embed_model"], input=[query])
+    usage.record_response(embed_resp, model=cfg["embed_model"], agent="knowledge")
+    embedding = embed_resp.data[0].embedding
     results = index.query(
         namespace=cfg["namespace"],
         vector=embedding,
@@ -1320,27 +1339,38 @@ def _generate_reply(
     message: str,
     hits: list[dict[str, Any]],
     history: list[dict[str, str]],
+    *,
+    grounded: bool = True,
 ) -> str:
-    """Generate an Ordis-persona narrative grounded in the retrieved context."""
+    """Generate an Ordis-persona narrative.
+
+    When `grounded` (the subject is a real corpus item), answer strictly from the
+    retrieved context. Otherwise the subject is a non-item lore topic — answer
+    from general knowledge so we never deflect, and never ground on a mismatched
+    item that merely happened to be the nearest semantic neighbour.
+    """
     cfg, client = _get_client()
-    context = _build_context(hits)
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if grounded:
+        system = SYSTEM_PROMPT
+        user = f"Knowledge context:\n{_build_context(hits)}\n\nOperator's question: {message}"
+    else:
+        system = LORE_SYSTEM_PROMPT
+        user = f"Operator's question: {message}"
+
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
     for turn in _trim_history(history, cfg["max_history"]):
         role = turn.get("role")
         content = turn.get("content")
         if role in ("user", "assistant") and content:
             messages.append({"role": role, "content": str(content)})
-    messages.append(
-        {
-            "role": "user",
-            "content": f"Knowledge context:\n{context}\n\nOperator's question: {message}",
-        }
-    )
+    messages.append({"role": "user", "content": user})
+
     resp = client.chat.completions.create(
         model=cfg["chat_model"],
         messages=messages,
         temperature=cfg["temperature"],
     )
+    usage.record_response(resp, model=cfg["chat_model"], agent="knowledge")
     return (resp.choices[0].message.content or "").strip()
 
 
@@ -1359,11 +1389,14 @@ def answer(message: str, history: list[dict[str, str]] | None = None) -> dict[st
 
     if hits:
         try:
-            reply = _generate_reply(message, hits, history)
+            reply = _generate_reply(message, hits, history, grounded=card_worthy)
         except Exception:
             reply = ""
         if not reply:
-            reply = (hits[0].get("description") or "").strip() or _NOT_FOUND_REPLY
+            # Fall back to the item description only for grounded (item) answers;
+            # a mismatched semantic hit's description would be misleading.
+            reply = (hits[0].get("description") or "").strip() if card_worthy else ""
+            reply = reply or _NOT_FOUND_REPLY
     else:
         reply = _NOT_FOUND_REPLY
 

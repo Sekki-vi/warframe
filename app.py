@@ -273,6 +273,7 @@ def _assistant_message_from_response(res: dict) -> dict:
         "plot_url": plot_url,
         "chart_label": res.get("chart_label", "Forecast chart") if plot_url else None,
         "guardrail_flagged": res.get("guardrail_flagged", False),
+        "usage": res.get("usage") or {},
     }
 
 
@@ -287,7 +288,11 @@ def _render_chat_message(msg: dict) -> None:
             render_source_cards(msg["sources"])
         if msg.get("agents_called"):
             agents_str = " + ".join(f"**{a.capitalize()} Agent**" for a in msg["agents_called"])
-            st.caption(f"via {agents_str}")
+            caption = f"via {agents_str}"
+            tok = (msg.get("usage") or {}).get("total")
+            if tok:
+                caption += f"  ·  🎟️ {tok:,} tokens"
+            st.caption(caption)
         if msg.get("guardrail_flagged"):
             st.caption("⚠️ Guardrail flagged")
 
@@ -336,19 +341,51 @@ st.set_page_config(page_title="Warframe AI", page_icon="⚔️", layout="wide")
 st.markdown(
     """
     <style>
-    /* App-shell layout: the page itself does not scroll. Each column's bounded
-       container (chat history + item explorer) fills the viewport and scrolls
-       independently, so the "Ask the Agent" / "Item Explorer" headers stay fixed.
-       Streamlit docks the top-level chat input to the viewport bottom. */
-    section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: calc(100vh - 13rem) !important;
+    /* App-shell layout. The main content area fills the viewport and never
+       scrolls as a page, so the "Ask the Agent" / "Item Explorer" headers stay
+       mounted at the top. Each column is a full-height flex column whose body
+       scrolls independently, and the chat input lives inside the chat column so
+       it ends exactly at that column's right border. */
+    [data-testid="stMainBlockContainer"] {
+        height: 100vh;
+        overflow: hidden;
+        padding-top: 2.5rem;
+        padding-bottom: 0;
     }
-    /* Keep each column header pinned above its scrolling body. */
-    section[data-testid="stMain"] div[data-testid="column"] > div > div[data-testid="stElementContainer"]:has(h3) {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        background: var(--background-color, #0e1117);
+    /* Propagate full height from the main block down to the columns row. */
+    [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] {
+        height: 100%;
+        min-height: 0;
+    }
+    [data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"] {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
+        height: 100%;
+        min-height: 0;
+    }
+    /* Each main column + its inner block becomes a full-height flex column. */
+    [data-testid="stMainBlockContainer"] [data-testid="stColumn"],
+    [data-testid="stMainBlockContainer"] [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    /* Direct children of a column's block (header, chat input) keep natural height. */
+    [data-testid="stMainBlockContainer"] [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {
+        flex: 0 0 auto;
+    }
+    /* The top-level bounded body (chat history / item explorer) grows and scrolls. */
+    [data-testid="stMainBlockContainer"] [data-testid="stColumn"] > [data-testid="stVerticalBlock"] > [data-testid="stLayoutWrapper"] {
+        flex: 1 1 auto;
+        height: auto !important;
+        min-height: 0;
+        overflow: auto;
+    }
+    [data-testid="stMainBlockContainer"] [data-testid="stColumn"] [data-testid="stChatInput"] {
+        margin-top: 0.5rem;
     }
     </style>
     """,
@@ -388,6 +425,23 @@ with st.sidebar:
 
     st.divider()
 
+    st.subheader("🎟️ Token Usage")
+    usage_stats = api_get("/usage")
+    if usage_stats and usage_stats.get("total"):
+        total = usage_stats["total"]
+        st.metric("Total tokens", f"{total.get('total', 0):,}")
+        st.caption(
+            f"{total.get('prompt', 0):,} prompt · {total.get('completion', 0):,} completion "
+            f"· {total.get('calls', 0)} calls"
+        )
+        by_agent = usage_stats.get("by_agent") or {}
+        for name, b in sorted(by_agent.items(), key=lambda kv: -kv[1].get("total", 0)):
+            st.caption(f"• {name.capitalize()}: {b.get('total', 0):,}")
+    else:
+        st.caption("No LLM calls yet.")
+
+    st.divider()
+
     st.subheader("📦 Portfolio")
     portfolio = api_get("/portfolio")
     if portfolio and portfolio.get("holdings"):
@@ -419,12 +473,12 @@ chat_col, explorer_col = st.columns([3, 2], gap="large")
 with chat_col:
     st.subheader("🤖 Ask the Agent")
     render_chat_history()
+    # Input lives inside the chat column so it spans only that column and ends
+    # at its right border (app-shell pins it to the bottom of the column).
+    handle_chat_input()
 
 with explorer_col:
     st.subheader("🔍 Item Explorer")
     # Bounded container so the explorer scrolls independently of the chat.
     with st.container(height=600):
         render_item_explorer()
-
-# Top-level input so Streamlit docks it to the bottom of the viewport.
-handle_chat_input()

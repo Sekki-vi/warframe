@@ -7,6 +7,7 @@ from typing import Any
 
 from openai import OpenAI
 
+from agents.common import usage
 from agents.market.tools.db import (
     add_holding,
     get_holdings,
@@ -199,6 +200,7 @@ def _run_agent(message: str, session_id: str, history: list[dict[str, str]] | No
             tools=TOOLS,
             tool_choice="auto",
         )
+        usage.record_response(resp, model=_chat_model(), agent="market")
         msg = resp.choices[0].message
         messages.append(msg)
         if not msg.tool_calls:

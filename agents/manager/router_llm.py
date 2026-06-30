@@ -7,6 +7,8 @@ from typing import Any
 
 from openai import OpenAI
 
+from agents.common import usage
+
 CLASSIFIER_SYSTEM = """You route Warframe assistant queries. The ONLY routing decision you make is whether a query needs the Forecasting agent. Everything else is handled downstream: the Market agent answers by default and automatically falls back to Knowledge when an item is not on Warframe Market.
 
 Return JSON with exactly these keys:
@@ -50,6 +52,7 @@ def classify_with_llm(message: str, context: dict[str, Any], item_query: str) ->
             response_format={"type": "json_object"},
             temperature=0,
         )
+        usage.record_response(resp, model=_manager_model(), agent="router")
         raw = resp.choices[0].message.content or "{}"
         data = json.loads(raw)
         if item_query and not data.get("item_query"):

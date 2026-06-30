@@ -8,6 +8,8 @@ from typing import Any
 
 from openai import OpenAI
 
+from agents.common import usage
+
 DEFAULT_MODEL = "gpt-4.1-mini"
 FALLBACK_MODEL = "gpt-4o-mini"
 
@@ -69,6 +71,7 @@ def chat_json(
         else:
             raise RuntimeError(f"OpenAI request failed: {exc}") from exc
 
+    usage.record_response(response, agent="forecasting")
     content = response.choices[0].message.content or "{}"
     payload = json.loads(content)
     if not isinstance(payload, dict):
@@ -102,4 +105,5 @@ def chat_text(
         else:
             raise RuntimeError(f"OpenAI request failed: {exc}") from exc
 
+    usage.record_response(response, agent="forecasting")
     return (response.choices[0].message.content or "").strip()
