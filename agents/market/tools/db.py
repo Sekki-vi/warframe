@@ -1,7 +1,6 @@
 """SQLite persistence layer for holdings and trade history."""
 
 import sqlite3
-import os
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "trades.db"
@@ -86,6 +85,18 @@ def sell_holding(item_slug: str, quantity: int, price_per_unit: float) -> str:
         f"Sold {quantity}x {existing['item_name']} @ {price_per_unit}p. "
         f"P&L vs avg cost ({avg_cost}p): {profit_str}"
     )
+
+
+def remove_holding(item_slug: str) -> str:
+    """Delete a holding outright without logging a sell trade."""
+    with _conn() as con:
+        existing = con.execute(
+            "SELECT item_name FROM holdings WHERE item_slug = ?", (item_slug,)
+        ).fetchone()
+        if not existing:
+            return f"Error: No holding found for {item_slug}"
+        con.execute("DELETE FROM holdings WHERE item_slug = ?", (item_slug,))
+    return f"Removed holding: {existing['item_name']}"
 
 
 def get_holdings() -> list[dict]:

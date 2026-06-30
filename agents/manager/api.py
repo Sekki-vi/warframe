@@ -20,6 +20,7 @@ from agents.market import (
     get_portfolio,
     item_details,
     orders,
+    remove as market_remove,
     search,
     sell as market_sell,
 )
@@ -110,6 +111,15 @@ def portfolio_sell(req: SellRequest):
     mapped = portfolio_error_response(result)
     if "error" in mapped:
         raise HTTPException(status_code=400, detail=mapped["error"])
+    return {"message": result.get("message", "ok")}
+
+
+@app.delete("/portfolio/{item_slug}")
+def portfolio_remove(item_slug: str):
+    result = market_remove(item_slug)
+    mapped = portfolio_error_response(result)
+    if "error" in mapped:
+        raise HTTPException(status_code=404, detail=mapped["error"])
     return {"message": result.get("message", "ok")}
 
 

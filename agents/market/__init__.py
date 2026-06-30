@@ -6,6 +6,7 @@ from agents.market.agent import (
     get_trades,
     item_details,
     orders,
+    remove,
     search,
     sell,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "get_trades",
     "item_details",
     "orders",
+    "remove",
     "search",
     "sell",
 ]

@@ -404,7 +404,14 @@ with st.sidebar:
     portfolio = api_get("/portfolio")
     if portfolio and portfolio.get("holdings"):
         for h in portfolio["holdings"]:
-            st.markdown(f"**{h['item_name']}**  \n{h['quantity']}x @ {h['avg_buy_price']}p avg")
+            info_col, btn_col = st.columns([4, 1])
+            info_col.markdown(f"**{h['item_name']}**  \n{h['quantity']}x @ {h['avg_buy_price']}p avg")
+            if btn_col.button("✕", key=f"rm_{h['item_slug']}", help="Remove from portfolio"):
+                try:
+                    requests.delete(f"{BACKEND_URL}/portfolio/{h['item_slug']}", timeout=10)
+                except Exception:
+                    pass
+                st.rerun()
             st.divider()
     else:
         st.caption("No holdings yet.")

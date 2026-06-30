@@ -13,6 +13,7 @@ from agents.market.tools.db import (
     get_holdings,
     get_trade_history,
     init_db,
+    remove_holding,
     sell_holding,
 )
 from agents.market.tools.wfm_api import get_item_details, get_orders, search_item
@@ -279,6 +280,15 @@ def buy(
 def sell(item_slug: str, quantity: int, price_per_unit: float) -> dict[str, Any]:
     _ensure_db()
     message = sell_holding(item_slug, quantity, price_per_unit)
+    if message.startswith("Error"):
+        return {"status": "error", "message": message}
+    return {"status": "ok", "message": message}
+
+
+def remove(item_slug: str) -> dict[str, Any]:
+    """Delete a holding outright (no sell trade logged)."""
+    _ensure_db()
+    message = remove_holding(item_slug)
     if message.startswith("Error"):
         return {"status": "error", "message": message}
     return {"status": "ok", "message": message}

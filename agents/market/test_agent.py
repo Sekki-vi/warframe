@@ -60,6 +60,23 @@ class MarketAgentTierTests(unittest.TestCase):
         self.assertEqual(len(out["sources"]), 1)
         self.assertEqual(out["sources"][0]["tier"], "S")
 
+    @patch("agents.market.agent._ensure_db")
+    @patch("agents.market.agent.remove_holding", return_value="Removed holding: Volt Prime Set")
+    def test_remove_ok(self, _mock_remove, _mock_db) -> None:
+        from agents.market.agent import remove
+
+        out = remove("volt-prime-set")
+        self.assertEqual(out["status"], "ok")
+        _mock_remove.assert_called_once_with("volt-prime-set")
+
+    @patch("agents.market.agent._ensure_db")
+    @patch("agents.market.agent.remove_holding", return_value="Error: No holding found for nope")
+    def test_remove_missing_is_error(self, _mock_remove, _mock_db) -> None:
+        from agents.market.agent import remove
+
+        out = remove("nope")
+        self.assertEqual(out["status"], "error")
+
 
 if __name__ == "__main__":
     unittest.main()
