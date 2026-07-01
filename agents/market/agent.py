@@ -36,7 +36,9 @@ question with "I don't know" — pick a concrete item.
 
 Out of scope: for lore, identity, abilities, mechanics, quests, or drop locations
 ("who is X", "tell me about X", etc.) call defer_to_knowledge with a short reason and stop.
-Do not answer those yourself and never tell the user to consult another source."""
+NEVER refuse or say you "can't assist / can't help / can't answer that", and never tell the
+user to consult another source — if you cannot answer from market data or as a recommendation,
+call defer_to_knowledge instead of refusing."""
 
 TOOLS = [
     {"type": "function", "function": {"name": "search_item", "description": "Find items by name; returns slug + name.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},

@@ -100,7 +100,8 @@ _PORTFOLIO_CUES = re.compile(
 )
 
 _MARKET_DEFLECTION_RE = re.compile(
-    r"can'?t (provide|help|answer|give)|"
+    r"can'?t (provide|help|answer|give|assist|do)|"
+    r"can\s?not (provide|help|answer|assist)|unable to assist|"
     r"consult (a|an|another)|dedicated source|authoritative source|"
     r"don'?t have (the )?(details|information)|outside .{0,20}scope|"
     r"refer to (a|an|another|the)|"
