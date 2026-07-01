@@ -103,7 +103,11 @@ _MARKET_DEFLECTION_RE = re.compile(
     r"can'?t (provide|help|answer|give)|"
     r"consult (a|an|another)|dedicated source|authoritative source|"
     r"don'?t have (the )?(details|information)|outside .{0,20}scope|"
-    r"refer to (a|an|another|the)",
+    r"refer to (a|an|another|the)|"
+    r"i (don'?t|do not) know|i'?m not sure|not sure (what|if|about|how)|"
+    r"no (information|data|details) (on|about|for|available)|"
+    r"couldn'?t find|could not find|unable to (find|answer|help|provide)|"
+    r"do(n'?t| not) have (any )?(info|information|data|details)",
     re.I,
 )
 
@@ -149,12 +153,12 @@ def _should_use_knowledge_backup(message: str, market_result: dict) -> bool:
     # outside trading scope (lore, abilities, quests, drops).
     if market_result.get("needs_knowledge"):
         return True
-    # Safety net: market resolved no item and either gave no answer or deflected
-    # (refused / told the user to consult another source) instead of deferring.
-    if not market_result.get("resolved_slug"):
-        response = (market_result.get("response") or "").strip()
-        if not response or _MARKET_DEFLECTION_RE.search(response):
-            return True
+    # If Market couldn't actually answer — no response, an "I don't know", or a
+    # deflection — try Knowledge before giving up, even when an item slug was
+    # resolved (Market may resolve an item yet not know its lore/abilities).
+    response = (market_result.get("response") or "").strip()
+    if not response or _MARKET_DEFLECTION_RE.search(response):
+        return True
     return False
 
 

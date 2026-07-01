@@ -105,6 +105,47 @@ class OrchestratorContextTests(unittest.TestCase):
     @patch("agents.manager.orchestrator.find_items_in_text", return_value=[])
     @patch("agents.manager.orchestrator.market_answer")
     @patch("agents.manager.orchestrator.knowledge_answer")
+    @patch("agents.manager.orchestrator.enrich_response")
+    @patch("agents.manager.orchestrator.format_knowledge_reply")
+    @patch("agents.manager.orchestrator.knowledge_sources")
+    @patch("agents.manager.orchestrator.classify")
+    def test_knowledge_backup_when_market_resolves_but_cant_answer(
+        self,
+        mock_classify,
+        mock_sources,
+        mock_format,
+        mock_enrich,
+        mock_knowledge,
+        mock_market,
+        _mock_find,
+    ):
+        from agents.manager.router import RoutePlan
+
+        mock_classify.return_value = RoutePlan(agent="market", reason="default_market")
+        # Market resolved an item but doesn't actually know the answer.
+        mock_market.return_value = {
+            "response": "I don't have information on Baruuk's passive.",
+            "resolved_slug": "baruuk",
+        }
+        mock_knowledge.return_value = {
+            "reply": "Baruuk's passive builds Restraint, Operator.",
+            "sources": [{"name": "Baruuk", "description": "Peaceful frame."}],
+            "resolved_slug": "baruuk",
+        }
+        mock_enrich.side_effect = lambda r: r
+        mock_format.return_value = "Baruuk's passive builds Restraint, Operator."
+        mock_sources.return_value = [{"name": "Baruuk", "description": "Peaceful frame."}]
+
+        out = handle_query("baruuk passive effect", "user", "orch-test")
+
+        mock_market.assert_called_once()
+        mock_knowledge.assert_called_once()
+        self.assertEqual(out["agents_called"][:2], ["market", "knowledge"])
+        self.assertIn("Restraint", out["response"])
+
+    @patch("agents.manager.orchestrator.find_items_in_text", return_value=[])
+    @patch("agents.manager.orchestrator.market_answer")
+    @patch("agents.manager.orchestrator.knowledge_answer")
     @patch("agents.manager.orchestrator.classify")
     def test_no_knowledge_backup_for_recommendations(
         self,
